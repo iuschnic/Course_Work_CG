@@ -3,6 +3,7 @@
 
 #include "SceneManager.h"
 #include "FileLoadManager.h"
+#include "BaseDrawer.h"
 
 class BaseCommand
 {
@@ -10,8 +11,9 @@ public:
     BaseCommand() = default;
     virtual ~BaseCommand() = default;
 
-    virtual void set_managers(std::shared_ptr<SceneManager> scene_manager,
-                              std::shared_ptr<FileLoadManager> load_manager)
+    //Проверить, нужны ли &
+    virtual void set_managers(std::shared_ptr<SceneManager> &scene_manager,
+                              std::shared_ptr<FileLoadManager> &load_manager)
     {
         _scene_manager = scene_manager;
         _load_manager = load_manager;

@@ -7,13 +7,13 @@
 class QtFactory: public AbstractFactory
 {
 public:
-    explicit QtFactory(QGraphicsScene *scene): _scene(scene) {}
+    explicit QtFactory(std::shared_ptr<QGraphicsScene> &scene): _scene(scene) {}
     std::unique_ptr<BaseDrawer> create_drawer() override
     {
         return std::unique_ptr<BaseDrawer>(new QtDrawer(_scene));
     }
 private:
-    QGraphicsScene *_scene;
+    std::shared_ptr<QGraphicsScene> _scene;
 };
 
 #endif // QTFACTORY_H

@@ -35,15 +35,23 @@ private:
 class PointLight: public BaseLight
 {
 public:
-    PointLight() : _center(Point(0, 0, 0)), _type("light"){}
-    PointLight(const Point &center) : _center(center), _type("light") {}
-    PointLight(const Point &center) : _center(center), _type("light") {}
-    PointLight(PointLight &light) : _center(light.get_center()), _type("light")
+    PointLight() : _center(Point(0, 0, 0)){
+        set_type("light");
+    }
+    PointLight(const Point &center) : _center(center) {
+        set_type("light");
+    }
+    /*PointLight(const Point &&center) : _center(center) {
+        set_type("light");
+    }*/
+    PointLight(PointLight &light) : _center(light.get_center())
     {
+        set_type("light");
         _id = light.get_id();
     }
-    PointLight(PointLight &&light) : _center(light.get_center()), _type("light")
+    PointLight(PointLight &&light) : _center(light.get_center())
     {
+        set_type("light");
         _id = light.get_id();
     }
     ~PointLight() = default;
@@ -51,6 +59,11 @@ public:
     void move(const double dx, const double dy, const double dz) override {_center.move(dx, dy, dz);}
     void rotate(const double ang_x, const double ang_y, const double ang_z) override {}
     void scale(const double kx, const double ky, const double kz) override {}
+
+    Point get_center()
+    {
+        return _center;
+    }
 
 private:
     Point _center;

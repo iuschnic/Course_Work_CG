@@ -11,8 +11,9 @@
 #include <memory>
 #include <iostream>
 #include <stdio.h>
+#include <vector>
 
-#define G 1
+#define G 10
 #define TIME 1
 
 class Scene
@@ -35,6 +36,7 @@ public:
     std::size_t add_light(const Point &location)
     {
         auto light = std::make_shared<PointLight>(PointLight(location));
+        //auto light = std::make_shared<PProjCamera>(PProjCamera(location));
         _invisible_objects.insert({light->get_id(), light});
         return light->get_id();
     }
@@ -95,19 +97,21 @@ public:
         std::map<std::size_t, Point> accelerations;
         for (const auto &[id_fir, obj_fir]: _visible_objects)
         {
+            auto fir = std::static_pointer_cast<Object>(obj_fir);
             Point accel(0, 0, 0);
-            double mass_fir = obj_fir->get_mass();
-            Point mass_center_fir = obj_fir->get_mass_center();
+            //double mass_fir = fir->get_mass();
+            Point mass_center_fir = fir->get_mass_center();
             for (auto &[id_sec, obj_sec]: _visible_objects)
             {
+                auto sec = std::static_pointer_cast<Object>(obj_sec);
                 if (id_fir != id_sec)
                 {
-                    double mass_sec = obj_sec->get_mass();
-                    Point mass_center_sec = obj_sec->get_mass_center();
+                    double mass_sec = sec->get_mass();
+                    Point mass_center_sec = sec->get_mass_center();
                     Point vec = mass_center_sec;
                     vec -= mass_center_fir;
-                    double r = (vec.get_x() ** 2 + vec.get_y() ** 2 + vec.get_z() ** 2) ** 0.5;
-                    accel += (G * mass_sec / (r ** 3)) * vec;
+                    double r = pow((pow(vec.get_x(), 2) + pow(vec.get_y(), 2) + pow(vec.get_z(), 2)), 0.5);
+                    accel += vec * (G * (mass_sec / pow(r, 3)));
                 }
             }
             accelerations[id_fir] = accel;
@@ -131,27 +135,43 @@ public:
     //Метод для обработки столкновений объектов в сцене
     void process_collisions()
     {
-        std::map<std::size_t, std::vector<size_t>> collisions;
+        std::vector<std::vector<size_t>> collisions;
         std::vector<size_t> obj_id_vec = get_visible_index();
+        int flag = 0;
         for (size_t i = 0; i < obj_id_vec.size(); i++)
         {
-            auto fir = _visible_objects[obj_id_vec[i]];
-            for (size_t j = i; j < obj_id_vec.size(); j++)
+            auto fir = std::static_pointer_cast<Object>(_visible_objects[obj_id_vec[i]]);
+            collisions.push_back({});
+            for (size_t j = i + 1; j < obj_id_vec.size(); j++)
             {
                 //Для каждого i-го объекта в его массив заносятся id объектов, пересекающихся с ним
-                auto sec = _visible_objects[obj_id_vec[j]];
-                if (fir->check_intersection(sec))
+                auto sec = std::static_pointer_cast<Object>(_visible_objects[obj_id_vec[j]]);
+                if (fir->check_intersection(sec) == true)
                 {
-                    collisions[obj_id_vec[i]] = {};
-                    collisions[obj_id_vec[i]].push_back(obj_id_vec[j]);
+                    std::cout << "FOUND\n";
+                    flag = 1;
+                    collisions[i].push_back(obj_id_vec[j]);
                 }
+            }
+        }
+        if (flag)
+        {
+            for (auto &el: obj_id_vec)
+                std::cout << el << std::endl;
+            std::cout << "collisions\n";
+            for (auto &el: collisions)
+            {
+                for (auto e: el)
+                {
+                    std::cout << e << " ";
+                }
+                std::cout << std::endl;
             }
         }
         if (collisions.empty())
             return;
-        while (true)
-        {
-            /* Допустим получили такой map:
+        //std::cout << "collisions\n";
+        /* Допустим получили такой map:
              * 1 -> 2, 3
              * 2 -> 3, 4
              * 4 -> 5
@@ -161,19 +181,23 @@ public:
              * 6 -> 7
              * На второй итерации цикл завершится по флагу, в итоге получим валидные списки тел, которые нужно объединять
              * */
+        /*while (true)
+        {
             int flag = 0;
-            for (auto &[id, data]: collisions)
+            for (int i = 0; i < obj_id_vec.size(); i++)
             {
+                //auto data = collisions[i];
                 flag = 0;
-                for (auto &intersected: data)
+                for (auto &intersected: collisions[i])
                 {
-                    if (collisions.count(intersected) > 0)
+                    //Если у тела, пересеченного i-м есть еще пересеченные тела, добавляем к i-му
+                    if (!collisions[intersected].empty())
                     {
                         for (size_t x: collisions[intersected])
                         {
                             //Чтобы не было повторов
-                            if (!data.contains(x))
-                                data.push_back(x);
+                            if (std::count(collisions[i].begin(), collisions[i].end(), x) == 0)
+                                collisions[i].push_back(x);
                         }
                         collisions[intersected].clear();
                         flag = 1;
@@ -188,16 +212,18 @@ public:
         if (collisions.empty())
             return;
         //Соединяем все получившиеся объекты
-        for (auto &[id, data]: collisions)
+        for (int i = 0; i < obj_id_vec.size(); i++)
         {
-            std::shared_ptr<VisibleObject> obj = get_object(id);
-            for (size_t id2: data)
+            if (collisions[i].empty())
+                continue;
+            auto obj = std::static_pointer_cast<Object>(get_object(obj_id_vec[i]));
+            for (size_t id2: collisions[i])
             {
-                std::shared_ptr<VisibleObject> obj2 = get_object(id2);
+                auto obj2 = std::static_pointer_cast<Object>(get_object(id2));
                 obj->add_object(obj2);
                 _visible_objects.erase(id2);
             }
-        }
+        }*/
     }
     void sim_iteration()
     {
@@ -205,10 +231,13 @@ public:
         std::map<std::size_t, Point> accel = calc_accelerations();
         for (auto &[id, obj]: _visible_objects)
         {
+            auto object = std::static_pointer_cast<Object>(obj);
             Point speed(accel[id]);
             speed *= TIME;
-            obj->add_speed(speed);
+            object->add_speed(speed);
+            speed = object->get_speed();
             speed *= TIME;
+            //std::cout << "moving " << speed.get_x() << " " << speed.get_y() << " " << speed.get_z();
             obj->move(speed.get_x(), speed.get_y(), speed.get_z());
         }
     }

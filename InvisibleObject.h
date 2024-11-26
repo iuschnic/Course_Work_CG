@@ -2,6 +2,7 @@
 #define INVISIBLEOBJECT_H
 
 #include "BaseObject.h"
+#include <string>
 
 class InvisibleObject: public BaseObject
 {

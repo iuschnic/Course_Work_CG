@@ -7,38 +7,45 @@
 //Команды отрисовки и очистки сцены
 class DrawSceneCommand: public BaseCommand
 {
-    using Action = void(SceneManager::*)();
+    using Action = void(SceneManager::*)(std::shared_ptr<BaseDrawer> drawer);
 
 public:
-    DrawSceneCommand()
+    DrawSceneCommand(std::shared_ptr<BaseDrawer> drawer)
     {
+        _drawer = drawer;
         _method = &SceneManager::draw_scene;
     }
     virtual void execute() override
     {
-        ((*_scene_manager).*_method)();
+        std::cout << "in draw cmd" << std::endl;
+        ((*_scene_manager).*_method)(_drawer);
+        std::cout << "out\n";
     }
 
 private:
     Action _method;
+    std::shared_ptr<BaseDrawer> _drawer;
 };
 
 class ClearGraphicsSceneCommand: public BaseCommand
 {
-    using Action = void(SceneManager::*)();
+    using Action = void(SceneManager::*)(std::shared_ptr<BaseDrawer> drawer);
 
 public:
-    ClearGraphicsSceneCommand()
+    ClearGraphicsSceneCommand(std::shared_ptr<BaseDrawer> drawer)
     {
+        _drawer = drawer;
         _method = &SceneManager::clear_graphics_scene;
     }
     virtual void execute() override
     {
-        ((*_scene_manager).*_method)();
+        ((*_scene_manager).*_method)(_drawer);
     }
 
 private:
     Action _method;
+    std::shared_ptr<BaseDrawer> _drawer;
+
 };
 
 class ClearSceneCommand: public BaseCommand
@@ -62,20 +69,42 @@ private:
 //Команды запуска и остановки симуляции
 class StartSimulationCommand: public BaseCommand
 {
-    using Action = void(SceneManager::*)();
+    using Action = void(SceneManager::*)(std::shared_ptr<BaseDrawer> drawer);
 
 public:
-    StartSimulationCommand()
+    StartSimulationCommand(std::shared_ptr<BaseDrawer> drawer)
     {
         _method = &SceneManager::start_simulation;
+        _drawer = drawer;
     }
     virtual void execute() override
     {
-        ((*_scene_manager).*_method)();
+        ((*_scene_manager).*_method)(_drawer);
     }
 
 private:
     Action _method;
+    std::shared_ptr<BaseDrawer> _drawer;
+};
+
+class SimIterationCommand: public BaseCommand
+{
+    using Action = void(SceneManager::*)(std::shared_ptr<BaseDrawer> drawer);
+
+public:
+    SimIterationCommand(std::shared_ptr<BaseDrawer> drawer)
+    {
+        _method = &SceneManager::sim_iteration;
+        _drawer = drawer;
+    }
+    virtual void execute() override
+    {
+        ((*_scene_manager).*_method)(_drawer);
+    }
+
+private:
+    Action _method;
+    std::shared_ptr<BaseDrawer> _drawer;
 };
 
 class StopSimulationCommand: public BaseCommand
@@ -225,9 +254,9 @@ private:
 };
 
 //Команды управления основной камерой сцены
-class GetMainCameraCommand : public BaseSceneCommand
+class GetMainCameraCommand : public BaseCommand
 {
-    using Action = std::shared_ptr<Camera> (SceneManager::*)();
+    using Action = std::shared_ptr<PProjCamera> (SceneManager::*)();
 
 public:
     GetMainCameraCommand(std::shared_ptr<PProjCamera> &camera) : _camera(camera)
@@ -244,7 +273,7 @@ private:
     Action _method;
 };
 
-class SetMainCameraCommand : public BaseSceneCommand
+class SetMainCameraCommand : public BaseCommand
 {
     using Action = void(SceneManager::*)(const std::size_t id_camera);
 
@@ -261,6 +290,29 @@ public:
 
 private:
     std::size_t _id_camera;
+    Action _method;
+};
+
+//Команда загрузки сцены из файла
+class FileLoadModelCommand : public BaseCommand
+{
+    using Action = std::vector<std::shared_ptr<VisibleObject>>(FileLoadManager::*)(std::string &filename);
+
+public:
+    FileLoadModelCommand(std::vector<std::shared_ptr<VisibleObject>> &objs, std::string &filename) : _objs(objs)
+    {
+        _filename = filename;
+        _method = &FileLoadManager::load;
+    }
+
+    virtual void execute() override
+    {
+        _objs = ((*_load_manager).*_method)(_filename);
+    }
+
+private:
+    std::string _filename;
+    std::vector<std::shared_ptr<VisibleObject>> &_objs; // Нужна ли & ?
     Action _method;
 };
 

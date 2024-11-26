@@ -5,7 +5,7 @@
 #include "LoadSolution.h"
 #include <string>
 
-class FileLoadManager: public BaseLoadManager
+class FileLoadManager
 {
 public:
     FileLoadManager()

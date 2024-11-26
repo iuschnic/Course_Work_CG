@@ -57,6 +57,16 @@ public:
         p.~Point();
         return *this;
     }
+    Point operator+(const Point &p)
+    {
+        Point tmp(_x + p.get_x(), _y + p.get_y(), _z + p.get_z());
+        return tmp;
+    }
+    Point operator+(const Point &&p)
+    {
+        Point tmp(_x + p.get_x(), _y + p.get_y(), _z + p.get_z());
+        return tmp;
+    }
     Point &operator-=(const Point &p)
     {
         _x -= p._x;
@@ -72,17 +82,47 @@ public:
         p.~Point();
         return *this;
     }
+    Point operator-(const Point &p)
+    {
+        Point tmp(_x - p.get_x(), _y - p.get_y(), _z - p.get_z());
+        return tmp;
+    }
+    Point operator-(const Point &&p)
+    {
+        Point tmp(_x - p.get_x(), _y - p.get_y(), _z - p.get_z());
+        return tmp;
+    }
     Point &operator*=(const double num)
     {
         _x *= num;
         _y *= num;
         _z *= num;
+        return *this;
+    }
+    Point operator*(const double num)
+    {
+        return Point(_x * num, _y * num, _z * num);
+    }
+    Point &operator*=(const int num)
+    {
+        _x *= num;
+        _y *= num;
+        _z *= num;
+        return *this;
+    }
+    Point operator*(const int num)
+    {
+        return Point(_x * num, _y * num, _z * num);
     }
     Point &operator/=(const double num)
     {
         _x /= num;
         _y /= num;
         _z /= num;
+    }
+    Point operator/(const double num)
+    {
+        return Point(_x / num, _y / num, _z / num);
     }
     ~Point() = default;
 
@@ -173,6 +213,115 @@ private:
     double _x;
     double _y;
     double _z;
+};
+
+class Pixel
+{
+public:
+    Pixel() = default;
+    Pixel(const int x, const int y)
+    {
+        _x = x;
+        _y = y;
+    }
+    Pixel(const Pixel &p)
+    {
+        _x = p._x;
+        _y = p._y;
+    }
+    Pixel(const Pixel &&p)
+    {
+        _x = p._x;
+        _y = p._y;
+    }
+    Pixel &operator=(const Pixel &p)
+    {
+        _x = p._x;
+        _y = p._y;
+        return *this;
+    }
+    Pixel &operator=(const Pixel &&p)
+    {
+        _x = p._x;
+        _y = p._y;
+        return *this;
+    }
+    Pixel &operator+=(const Pixel &p)
+    {
+        _x += p._x;
+        _y += p._y;
+        return *this;
+    }
+    Pixel &operator+=(const Pixel &&p)
+    {
+        _x += p._x;
+        _y += p._y;
+        return *this;
+    }
+    Pixel operator+(const Pixel &p)
+    {
+        Pixel tmp(_x + p.get_x(), _y + p.get_y());
+        return tmp;
+    }
+    Pixel operator+(const Pixel &&p)
+    {
+        Pixel tmp(_x + p.get_x(), _y + p.get_y());
+        return tmp;
+    }
+    Pixel &operator-=(const Pixel &p)
+    {
+        _x -= p._x;
+        _y -= p._y;
+        return *this;
+    }
+    Pixel &operator-=(const Pixel &&p)
+    {
+        _x -= p._x;
+        _y -= p._y;
+        return *this;
+    }
+    Pixel operator-(const Pixel &p)
+    {
+        Pixel tmp(_x - p.get_x(), _y - p.get_y());
+        return tmp;
+    }
+    Pixel operator-(const Pixel &&p)
+    {
+        Pixel tmp(_x - p.get_x(), _y - p.get_y());
+        return tmp;
+    }
+    Pixel &operator*=(const double num)
+    {
+        _x *= num;
+        _y *= num;
+        return *this;
+    }
+    Pixel operator*(const double num)
+    {
+        return Pixel(_x * num, _y * num);
+    }
+    ~Pixel() = default;
+
+    double get_x() const {return _x;}
+    double get_y() const {return _y;}
+    void set_x(const double x) {_x = x;}
+    void set_y(const double y) {_y = y;}
+
+    bool operator==(const Pixel &p) {return this->is_equal(p);}
+    bool is_equal(const Pixel &p)
+    {
+        return (_x == p._x) && (_y == p._y);
+    }
+
+    bool operator!=(const Pixel &p) {return this->is_not_equal(p);}
+    bool is_not_equal(const Pixel &p)
+    {
+        return (_x != p._x) || (_y != p._y);
+    }
+
+private:
+    int _x;
+    int _y;
 };
 
 #endif // POINT_H

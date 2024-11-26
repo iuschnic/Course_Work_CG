@@ -1,14 +1,122 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include <qtimer.h>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    setup_scene();
+
+    _facade = std::make_shared<Facade>(Facade());
+
+    auto cont = ui->graphicsView->contentsRect();
+    auto id = std::make_shared<std::size_t>(0);
+    Point location(-cont.width() / 2.0, -cont.height() / 2.0, -500);
+    AddCameraCommand add_cam_cmd (location, id);
+    _facade->execute(add_cam_cmd);
+    //_cameras.push_back(*id);
+
+    SetMainCameraCommand set_cam(*id);
+    _facade->execute(set_cam);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
 }
+
+void MainWindow::update_scene()
+{
+    ClearGraphicsSceneCommand clear_cmd(_drawer);
+    _facade->execute(clear_cmd);
+
+    DrawSceneCommand draw_cmd(_drawer);
+    _facade->execute(draw_cmd);
+}
+
+void MainWindow::setup_scene()
+{
+    _scene = std::make_shared<QGraphicsScene>(this);
+    ui->graphicsView->setScene(_scene.get());
+    ui->graphicsView->setAlignment(Qt::AlignTop | Qt::AlignLeft);
+
+    auto cont = ui->graphicsView->contentsRect();
+    _scene->setSceneRect(0, 0, cont.width(), cont.height());
+    auto solution(new DrawerSolution<QtFactory, QGraphicsScene>());
+    _drawer = solution->create_drawer(_scene);
+    delete(solution);
+}
+
+void MainWindow::on_load_scene_btn_clicked()
+{
+    auto path = QFileDialog::getOpenFileName(nullptr, "Загружаем сцену...", "../OOP_lab_03_final/points_links_cube.txt");
+    if (path.isNull())
+        return;
+
+    std::vector<std::shared_ptr<VisibleObject>> objs;
+    auto id = std::make_shared<size_t>(0);
+    std::string file_name = path.toStdString();
+
+    ClearSceneCommand clear_cmd;
+    _facade->execute(clear_cmd);
+
+    try
+    {
+        FileLoadModelCommand load_cmd(objs, file_name);
+        _facade->execute(load_cmd);
+        for (auto &obj: objs)
+        {
+            std::cout << "added" << std::endl;
+            AddObjectCommand add_cmd(obj, id);
+            _facade->execute(add_cmd);
+            //_models.push_back(*id);
+        }
+    }
+    catch (const BaseException &err)
+    {
+        QMessageBox::critical(nullptr, "Ошибка!", "Ошибка загрузки из файла!");
+        return;
+    }
+    std::cout << "added objs" << std::endl;
+
+    //_models.push_back(*id);
+    //update_scene();
+    ClearGraphicsSceneCommand clear_graphics_cmd(_drawer);
+    _facade->execute(clear_graphics_cmd);
+
+    DrawSceneCommand draw_cmd(_drawer);
+    std::cout << "created draw_cmd\n";
+    _facade->execute(draw_cmd);
+    std::cout << "after draw_cmd\n";
+    //auto filename = QFileInfo(path.toUtf8().data()).fileName();
+    //QString figure = QString("Model ") + QString::number(*id);
+    //ui->models_combobox->addItem(figure);
+    //ui->models_combobox->setCurrentIndex(ui->models_combobox->count() - 1);
+}
+
+
+void MainWindow::on_start_simulation_clicked()
+{
+    /*for (int i = 0; i < 100; i++)
+    {
+        SimIterationCommand sim(_drawer);
+        _facade->execute(sim);
+    }*/
+    SimIterationCommand sim(_drawer);
+    QTimer *timer = new QTimer(this);
+    //QMetaObject::Connection connection = timer->callOnTimeout(_facade->execute(sim));
+    connect(timer, SIGNAL(timeout()), this, SLOT(simulate()));
+    timer->start(1000 / 5);
+
+    /*StartSimulationCommand start_cmd(_drawer);
+    _facade->execute(start_cmd);*/
+}
+
+void MainWindow::simulate()
+{
+    StartSimulationCommand start_cmd(_drawer);
+    _facade->execute(start_cmd);
+}
+

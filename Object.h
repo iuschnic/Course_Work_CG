@@ -30,10 +30,10 @@ public:
         Point center = (_mass_center * _mass + center_new * mass_new) / (_mass + mass_new);
         _speed = (center_new * mass_new + _mass_center * _mass) / (mass_new + _mass);
         _mass_center = center;
-        _mass += obj->get_mass;
+        _mass += obj->get_mass();
     }
 
-    const std::vector<std::shared_ptr<Sphere> get_spheres() const
+    const std::vector<std::shared_ptr<Sphere>> get_spheres() const
     {
         return _spheres;
     }
@@ -57,12 +57,15 @@ public:
     {
         return _mass;
     }
-    void move(const double &dx, const double &dy, const double &dz) override
+    void move(const double dx, const double dy, const double dz) override
     {
         for (const auto &sp : _spheres)
             sp->move(dx, dy, dz);
         _mass_center.move(dx, dy, dz);
     }
+
+    void scale(const double kx, const double ky, const double kz) override {}
+    void rotate(const double ang_x, const double ang_y, const double ang_z) override {}
 
     bool check_intersection(const std::shared_ptr<Object> &obj)
     {
@@ -71,8 +74,24 @@ public:
         {
             for (const auto &sp2: spheres_obj)
             {
+                /*std::cout << "TWO SPHERES:\n";
+                std::cout << sp1->get_center().get_x() << std::endl;
+                std::cout << sp1->get_center().get_y() << std::endl;
+                std::cout << sp1->get_center().get_z() << std::endl;
+                std::cout << sp2->get_center().get_x() << std::endl;
+                std::cout << sp2->get_center().get_y() << std::endl;
+                std::cout << sp2->get_center().get_z() << std::endl;*/
                 if (sp1->check_intersection(*sp2))
+                {
+                    std::cout << "FOUND INTERSECTION AMONG:\n";
+                    std::cout << sp1->get_center().get_x() << std::endl;
+                    std::cout << sp1->get_center().get_y() << std::endl;
+                    std::cout << sp1->get_center().get_z() << std::endl;
+                    std::cout << sp2->get_center().get_x() << std::endl;
+                    std::cout << sp2->get_center().get_y() << std::endl;
+                    std::cout << sp2->get_center().get_z() << std::endl;
                     return true;
+                }
             }
         }
         return false;

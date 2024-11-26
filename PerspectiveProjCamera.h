@@ -7,14 +7,19 @@
 class PProjCamera: public BaseCamera
 {
 public:
-    PProjCamera() : _center(Point(0, 0, 100)), _direction(Point(0, 0, -1)), _type("camera"){}
-    PProjCamera(const Point &center) : _center(center), _direction(Point(0, 0, -1)), _type("camera") {}
-    PProjCamera(Camera &camera) : _center(camera.get_center()), _direction(camera.get_direction()), _type("camera")
-    {
+    PProjCamera() : _center(Point(0, 0, 100)), _direction(Point(0, 0, -1)){
+        set_type("camera");
+    }
+    PProjCamera(const Point &center) : _center(center), _direction(Point(0, 0, -1)){
+        set_type("camera");
+    }
+    PProjCamera(PProjCamera &camera) : _center(camera.get_center()), _direction(camera.get_direction()){
+        set_type("camera");
         _id = camera.get_id();
     }
-    PProjCamera(Camera &&camera) : _center(camera.get_center()), _direction(camera.get_direction()), _type("camera")
+    PProjCamera(PProjCamera &&camera) : _center(camera.get_center()), _direction(camera.get_direction())
     {
+        set_type("camera");
         _id = camera.get_id();
     }
     ~PProjCamera() = default;
@@ -31,8 +36,8 @@ public:
         //Возможно сделаю преобразование к координатам камеры
         Point p(point);
         double coef = 1 - point.get_z() / _center.get_z();
-        p.set_x(point.get_x() / coef);
-        p.set_y(point.get_y() / coef);
+        p.set_x(point.get_x() / coef - _center.get_x());
+        p.set_y(point.get_y() / coef - _center.get_y());
         p.set_z(point.get_z() / coef);
         return p;
     }

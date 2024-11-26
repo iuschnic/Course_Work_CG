@@ -8,7 +8,7 @@ template <typename Tfactory, typename Tscene>
 class DrawerSolution
 {
 public:
-    std::unique_ptr<BaseDrawer> create_drawer(Tscene *scene)
+    std::unique_ptr<BaseDrawer> create_drawer(std::shared_ptr<Tscene> &scene)
     {
         std::shared_ptr<AbstractFactory> factory(new Tfactory(scene));
         return factory->create_drawer();
