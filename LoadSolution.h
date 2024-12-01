@@ -50,6 +50,7 @@ private:
         if (!stream)
             return nullptr;
         mass = 4 * M_PI * pow(radius, 3) * 0.0001;
+        radius = fabs(radius);
         std::shared_ptr<Sphere> sphere = std::make_shared<Sphere>(Sphere(mass, radius, center));
         //std::cout << "loaded" << std::endl;
         return sphere;

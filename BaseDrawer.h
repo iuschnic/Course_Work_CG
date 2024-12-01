@@ -21,10 +21,10 @@ public:
 
     virtual void clear() = 0;
     virtual void draw() = 0;
-    virtual void addLine(const Point &point1, const Point &point2, const QColor &color) = 0;
-    virtual void addPoint(const Point &point, const QColor &color) = 0;
-    virtual size_t getHeight() const = 0;
-    virtual size_t getWidth() const = 0;
+    virtual void add_line(const Point &point1, const Point &point2, const QColor &color) = 0;
+    virtual void add_point(const Pixel &point, const QColor &color) = 0;
+    virtual size_t get_height() const = 0;
+    virtual size_t get_width() const = 0;
 };
 
 #endif // BASEDRAWER_H

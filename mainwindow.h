@@ -35,10 +35,13 @@ private slots:
 
     void simulate();
 
+    void on_stop_simulation_clicked();
+
 private:
     Ui::MainWindow *ui;
     std::shared_ptr<QGraphicsScene> _scene;
     std::shared_ptr<BaseDrawer> _drawer;
     std::shared_ptr<Facade> _facade;
+    QTimer *_timer;
 };
 #endif // MAINWINDOW_H

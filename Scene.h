@@ -99,7 +99,7 @@ public:
         {
             auto fir = std::static_pointer_cast<Object>(obj_fir);
             Point accel(0, 0, 0);
-            //double mass_fir = fir->get_mass();
+            double mass_fir = fir->get_mass();
             Point mass_center_fir = fir->get_mass_center();
             for (auto &[id_sec, obj_sec]: _visible_objects)
             {
@@ -111,7 +111,7 @@ public:
                     Point vec = mass_center_sec;
                     vec -= mass_center_fir;
                     double r = pow((pow(vec.get_x(), 2) + pow(vec.get_y(), 2) + pow(vec.get_z(), 2)), 0.5);
-                    accel += vec * (G * (mass_sec / pow(r, 3)));
+                    accel += vec * (G * (mass_sec / pow(r, 3))) * (mass_fir < 0 ? -1 : 1);
                 }
             }
             accelerations[id_fir] = accel;
@@ -135,7 +135,34 @@ public:
     //Метод для обработки столкновений объектов в сцене
     void process_collisions()
     {
-        std::vector<std::vector<size_t>> collisions;
+
+        while (true)
+        {
+            int flag = 0;
+            std::vector<size_t> obj_id_vec = get_visible_index();
+            for (size_t i = 0; i < obj_id_vec.size(); i++)
+            {
+                auto fir = std::static_pointer_cast<Object>(_visible_objects[obj_id_vec[i]]);
+                for (size_t j = i + 1; j < obj_id_vec.size(); j++)
+                {
+                    //Для каждого i-го объекта в его массив заносятся id объектов, пересекающихся с ним
+                    auto sec = std::static_pointer_cast<Object>(_visible_objects[obj_id_vec[j]]);
+                    if (fir->check_intersection(sec) == true)
+                    {
+                        std::cout << "FOUND\n";
+                        flag = 1;
+                        fir->add_object(sec);
+                        _visible_objects.erase(obj_id_vec[j]);
+                        break;
+                    }
+                }
+                if (flag)
+                    break;
+            }
+            if (!flag)
+                break;
+        }
+        /*std::vector<std::vector<size_t>> collisions;
         std::vector<size_t> obj_id_vec = get_visible_index();
         int flag = 0;
         for (size_t i = 0; i < obj_id_vec.size(); i++)
@@ -169,7 +196,11 @@ public:
             }
         }
         if (collisions.empty())
-            return;
+            return;*/
+
+
+
+
         //std::cout << "collisions\n";
         /* Допустим получили такой map:
              * 1 -> 2, 3

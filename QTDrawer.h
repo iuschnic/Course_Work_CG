@@ -56,11 +56,11 @@ public:
         /*for (const auto &line : m_lines)
             m_scene->addLine(line.first, QPen(line.second));*/
     }
-    virtual void addLine(const Point &point1, const Point &point2, const QColor &color) override
+    virtual void add_line(const Point &point1, const Point &point2, const QColor &color) override
     {
         _lines.emplace_back(QLine(point1.get_x(), point1.get_y(), point2.get_x(), point2.get_y()), color);
     }
-    virtual void addPoint(const Point &point, const QColor &color) override
+    virtual void add_point(const Pixel &point, const QColor &color) override
     {
         if (point.get_x() < 0 || point.get_x() >= _width)
             return;
@@ -68,11 +68,11 @@ public:
             return;
         _image->setPixelColor(QPoint(point.get_x(), point.get_y()), color);
     }
-    virtual size_t getHeight() const override
+    virtual size_t get_height() const override
     {
         return _scene->height();
     }
-    virtual size_t getWidth() const override
+    virtual size_t get_width() const override
     {
         return _scene->width();
     }

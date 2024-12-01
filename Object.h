@@ -26,9 +26,10 @@ public:
             _spheres.push_back(sp);
         double mass_new = obj->get_mass();
         Point center_new = obj->get_mass_center();
+        Point speed_new = obj->get_speed();
 
         Point center = (_mass_center * _mass + center_new * mass_new) / (_mass + mass_new);
-        _speed = (center_new * mass_new + _mass_center * _mass) / (mass_new + _mass);
+        _speed = (speed_new * mass_new + _speed * _mass) / (mass_new + _mass);
         _mass_center = center;
         _mass += obj->get_mass();
     }

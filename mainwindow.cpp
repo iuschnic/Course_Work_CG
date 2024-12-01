@@ -14,6 +14,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto cont = ui->graphicsView->contentsRect();
     auto id = std::make_shared<std::size_t>(0);
     Point location(-cont.width() / 2.0, -cont.height() / 2.0, -500);
+    _timer = new QTimer(this);
+    connect(_timer, SIGNAL(timeout()), this, SLOT(simulate()));
     AddCameraCommand add_cam_cmd (location, id);
     _facade->execute(add_cam_cmd);
     //_cameras.push_back(*id);
@@ -24,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    delete _timer;
     delete ui;
 }
 
@@ -99,16 +102,9 @@ void MainWindow::on_load_scene_btn_clicked()
 
 void MainWindow::on_start_simulation_clicked()
 {
-    /*for (int i = 0; i < 100; i++)
-    {
-        SimIterationCommand sim(_drawer);
-        _facade->execute(sim);
-    }*/
-    SimIterationCommand sim(_drawer);
-    QTimer *timer = new QTimer(this);
-    //QMetaObject::Connection connection = timer->callOnTimeout(_facade->execute(sim));
-    connect(timer, SIGNAL(timeout()), this, SLOT(simulate()));
-    timer->start(1000 / 5);
+    //QTimer *timer = new QTimer(this);
+    //connect(timer, SIGNAL(timeout()), this, SLOT(simulate()));
+    _timer->start(1000 / 5);
 
     /*StartSimulationCommand start_cmd(_drawer);
     _facade->execute(start_cmd);*/
@@ -118,5 +114,11 @@ void MainWindow::simulate()
 {
     StartSimulationCommand start_cmd(_drawer);
     _facade->execute(start_cmd);
+}
+
+
+void MainWindow::on_stop_simulation_clicked()
+{
+    _timer->stop();
 }
 
