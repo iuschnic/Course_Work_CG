@@ -133,7 +133,226 @@ private:
     {
         return _camera->get_projection(point);
     }
+
+    void triangle5(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
+        if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
+        {
+            if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
+            if (t0.get_x() > t2.get_x()) std::swap(t0, t2);
+            if (t1.get_x() > t2.get_x()) std::swap(t1, t2);
+            for (int j = t0.get_x(); j <= t2.get_x(); j++) {
+                auto pixel = Pixel(j, t0.get_y(), 0);
+                _drawer->add_point(pixel, color);
+            }
+            return; // i dont care about degenerate triangles
+        }
+        if (t0.get_y() > t1.get_y()) std::swap(t0, t1);
+        if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
+        if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
+
+        int total_height = t2.get_y() - t0.get_y();
+        for (int y = t0.get_y(); y <= t1.get_y(); y++) {
+            int segment_height = t1.get_y() - t0.get_y() + 1;
+            float alpha = (float)(y - t0.get_y()) / total_height;
+            float beta  = (float)(y - t0.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel A = t0 + (t2 - t0) * alpha;
+            Pixel B = t0 + (t1 - t0) * beta;
+            if (A.get_x() > B.get_x()) std::swap(A, B);
+            for (int j = A.get_x(); j <= B.get_x(); j++) {
+                //image.set(j, y, color); // attention, due to int casts t0.get_y()+i != A.get_y()
+                auto pixel = Pixel(j, y, 0);
+                _drawer->add_point(pixel, color);
+            }
+        }
+        for (int y = t1.get_y(); y <= t2.get_y(); y++) {
+            int segment_height = t2.get_y() - t1.get_y() + 1;
+            float alpha = (float)(y - t0.get_y()) / total_height;
+            float beta  = (float)(y - t1.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel A = t0 + (t2 - t0) * alpha;
+            Pixel B = t1 + (t2 - t1) * beta;
+            if (A.get_x() > B.get_x()) std::swap(A, B);
+            for (int j = A.get_x(); j <= B.get_x(); j++) {
+                //image.set(j, y, color); // attention, due to int casts t0.get_y()+i != A.get_y()
+                auto pixel = Pixel(j, y, 0);
+                _drawer->add_point(pixel, color);
+            }
+        }
+    }
+
     void triangle(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
+        if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
+        {
+            if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
+            if (t0.get_x() > t2.get_x()) std::swap(t0, t2);
+            if (t1.get_x() > t2.get_x()) std::swap(t1, t2);
+            double dz = (t2.get_z() - t0.get_z()) / (t2.get_x() - t0.get_x() + 1);
+            double z = t0.get_z();
+            for (int j = t0.get_x(); j <= t2.get_x(); j++) {
+                if (_z_buf[t0.get_y()][j] >= z) {
+                    _z_buf[t0.get_y()][j] = z;
+                    auto pixel = Pixel(j, t0.get_y(), z);
+                    _drawer->add_point(pixel, color);
+                }
+                z += dz;
+            }
+            return;
+        }
+        if (t0.get_y() > t1.get_y()) std::swap(t0, t1);
+        if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
+        if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
+
+        //Расчет инкрементов глубины при движении по оси y, двигаемся снизу вверх, от t0 к t1
+        double dz_y_0_1 = (t1.get_z() - t0.get_z()) / (t1.get_y() - t0.get_y() + 1); //Между t0 и t1
+        double dz_y_0_2 = (t2.get_z() - t0.get_z()) / (t2.get_y() - t0.get_y() + 1); //Между t0 и t2
+        double z0 = t0.get_z(); //начальное значение z
+        double z_a = z0;
+        double z_b = z0;
+        int total_height = t2.get_y() - t0.get_y();
+        int segment_height = t1.get_y() - t0.get_y() + 1;
+        for (int y = t0.get_y(); y <= t1.get_y(); y++) {
+            float alpha = (float)(y - t0.get_y()) / total_height;
+            float beta  = (float)(y - t0.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel A = t0 + (t2 - t0) * alpha;
+            Pixel B = t0 + (t1 - t0) * beta;
+            double dz_a = dz_y_0_2;
+            double dz_b = dz_y_0_1;
+            if (A.get_x() > B.get_x())
+            {
+                std::swap(A, B);
+                std::swap(dz_a, dz_b);
+            }
+            z_a += dz_a;
+            z_b += dz_b;
+            double dz_x = (z_b - z_a) / (B.get_x() - A.get_x() + 1);
+            double z_cur = z_a;
+            for (int j = A.get_x(); j <= B.get_x(); j++) {
+                if (_z_buf[y][j] >= z_cur) {
+                    _z_buf[y][j] = z_cur;
+                    auto pixel = Pixel(j, y, 0);
+                    _drawer->add_point(pixel, color);
+                }
+                z_cur += dz_x;
+            }
+        }
+
+        //Расчет инкрементов глубины при движении по оси y, двигаемся сверху вниз, от t2 к t1
+        /*double dz_y_2_1 = (t1.get_z() - t2.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t2 и t1
+        double dz_y_2_0 = (t0.get_z() - t2.get_z()) / (t2.get_y() - t0.get_y() + 1); //Между t2 и t0
+        z0 = t2.get_z(); //начальное значение z
+        z_a = z0;
+        z_b = z0;
+        segment_height = t2.get_y() - t1.get_y() + 1;
+        for (int y = t2.get_y(); y >= t1.get_y(); y--) {
+            float alpha = (float)(-y + t2.get_y()) / total_height;
+            float beta  = (float)(-y + t2.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel A = t2 + (t0 - t2) * alpha;
+            Pixel B = t2 + (t1 - t2) * beta;
+            double dz_a = dz_y_2_1;
+            double dz_b = dz_y_2_0;
+            if (A.get_x() > B.get_x())
+            {
+                std::swap(A, B);
+                std::swap(dz_a, dz_b);
+            }
+            z_a += dz_a;
+            z_b += dz_b;
+            double dz_x = (z_b - z_a) / (B.get_x() - A.get_x() + 1);
+            double z_cur = z_a;
+            for (int j = A.get_x(); j <= B.get_x(); j++) {
+                if (_z_buf[y][j] >= z_cur) {
+                    _z_buf[y][j] = z_cur;
+                    auto pixel = Pixel(j, y, 0);
+                    _drawer->add_point(pixel, color);
+                }
+                z_cur += dz_x;
+            }
+        }*/
+        double dz_y_1_2 = (t2.get_z() - t1.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t2 и t1
+        //z0 = t2.get_z(); //начальное значение z
+        z_b = t1.get_z();
+        //z_a остается каким был
+        for (int y = t1.get_y(); y <= t2.get_y(); y++) {
+            int segment_height = t2.get_y() - t1.get_y() + 1;
+            float alpha = (float)(y - t0.get_y()) / total_height;
+            float beta  = (float)(y - t1.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel A = t0 + (t2 - t0) * alpha;
+            Pixel B = t1 + (t2 - t1) * beta;
+            double dz_a = dz_y_0_2;
+            double dz_b = dz_y_1_2;
+            if (A.get_x() > B.get_x())
+            {
+                std::swap(A, B);
+                std::swap(dz_a, dz_b);
+            }
+            z_a += dz_a;
+            z_b += dz_b;
+            double dz_x = (z_b - z_a) / (B.get_x() - A.get_x() + 1);
+            double z_cur = z_a;
+            for (int j = A.get_x(); j <= B.get_x(); j++) {
+                //image.set(j, y, color); // attention, due to int casts t0.get_y()+i != A.get_y()
+                if (_z_buf[y][j] >= z_cur) {
+                    _z_buf[y][j] = z_cur;
+                    auto pixel = Pixel(j, y, 0);
+                    _drawer->add_point(pixel, color);
+                }
+                z_cur += dz_x;
+            }
+        }
+    }
+
+    void triangle_0(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
+        if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
+        {
+            if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
+            if (t0.get_x() > t2.get_x()) std::swap(t0, t2);
+            if (t1.get_x() > t2.get_x()) std::swap(t1, t2);
+            double dz = (t2.get_z() - t0.get_z()) / (t2.get_x() - t0.get_x() + 1);
+            double z = t0.get_z();
+            for (int j = t0.get_x(); j <= t2.get_x(); j++) {
+                if (_z_buf[t0.get_y()][j] >= z) {
+                    _z_buf[t0.get_y()][j] = z;
+                    auto pixel = Pixel(j, t0.get_y(), z);
+                    _drawer->add_point(pixel, color);
+                }
+                z += dz;
+            }
+            return;
+        }
+        if (t0.get_y() > t1.get_y()) std::swap(t0, t1);
+        if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
+        if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
+
+        int total_height = t2.get_y() - t0.get_y();
+        for (int y = t0.get_y(); y <= t1.get_y(); y++) {
+            int segment_height = t1.get_y() - t0.get_y() + 1;
+            float alpha = (float)(y - t0.get_y()) / total_height;
+            float beta  = (float)(y - t0.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel A = t0 + (t2 - t0) * alpha;
+            Pixel B = t0 + (t1 - t0) * beta;
+            if (A.get_x() > B.get_x()) std::swap(A, B);
+            for (int j = A.get_x(); j <= B.get_x(); j++) {
+                //image.set(j, y, color); // attention, due to int casts t0.get_y()+i != A.get_y()
+                auto pixel = Pixel(j, y, 0);
+                _drawer->add_point(pixel, color);
+            }
+        }
+        for (int y = t1.get_y(); y <= t2.get_y(); y++) {
+            int segment_height = t2.get_y() - t1.get_y() + 1;
+            float alpha = (float)(y - t0.get_y()) / total_height;
+            float beta  = (float)(y - t1.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel A = t0 + (t2 - t0) * alpha;
+            Pixel B = t1 + (t2 - t1) * beta;
+            if (A.get_x() > B.get_x()) std::swap(A, B);
+            for (int j = A.get_x(); j <= B.get_x(); j++) {
+                //image.set(j, y, color); // attention, due to int casts t0.get_y()+i != A.get_y()
+                auto pixel = Pixel(j, y, 0);
+                _drawer->add_point(pixel, color);
+            }
+        }
+    }
+
+
+    void triangle_1(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
         if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
         {
             if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
@@ -170,9 +389,6 @@ private:
                 _drawer->addPoint(pixel, color);
             }
         }*/
-
-
-
 
         /*// sort the vertices, t0, t1, t2 lower-to-upper (bubblesort yay!)
         if (t0.get_y() > t1.get_y()) std::swap(t0, t1);

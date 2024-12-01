@@ -5,8 +5,8 @@
 #include <iostream>
 #include "Point.h"
 
-#define SEGMENTS_PARALLEL 20
-#define SEGMENTS_MERIDIAN 20
+#define SEGMENTS_PARALLEL 10
+#define SEGMENTS_MERIDIAN 10
 
 class Sphere
 {
