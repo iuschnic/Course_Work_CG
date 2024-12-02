@@ -68,18 +68,19 @@ public:
         _adapter->set_camera(_camera);
         _adapter->clear();
         _scene->sim_iteration();
-        //draw(intensities);
-        draw();
+        std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light, _camera);
+        draw(intensities);
+        //draw();
     }
 
     void draw_scene(std::shared_ptr<BaseDrawer> drawer)
     {
         //std::cout << "in draw_scene method\n";
-        //std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light);
+        std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light, _camera);
         _adapter->set_drawer(drawer);
         _adapter->set_camera(_camera);
-        //draw(intensities);
-        draw();
+        draw(intensities);
+        //draw();
     }
 
     void clear_graphics_scene(std::shared_ptr<BaseDrawer> drawer)
@@ -103,7 +104,7 @@ private:
     std::shared_ptr<DrawAdapter> _adapter;
     int _sim_flag;
 
-    /*void draw(std::map<std::size_t, std::vector<std::vector<double>>> &intensities)
+    void draw(std::map<std::size_t, std::vector<std::vector<double>>> &intensities)
     {
         //std::cout << "in draw method\n";
         for (const auto &kv : _scene->_visible_objects)
@@ -113,20 +114,6 @@ private:
             //std::cout << obj_ptr->get_mass() << std::endl;
             _adapter->set_adaptee(obj_ptr);
             _adapter->set_adaptee_intensities(i);
-            //std::cout << i << std::endl;
-            _adapter->request();
-        }
-        _adapter->draw();
-    }*/
-    void draw()
-    {
-        for (const auto &kv : _scene->_visible_objects)
-        {
-            //auto i = intensities[kv.first];
-            auto obj_ptr = std::dynamic_pointer_cast<Object>(kv.second);
-            //std::cout << obj_ptr->get_mass() << std::endl;
-            _adapter->set_adaptee(obj_ptr);
-            //_adapter->set_adaptee_intensities(i);
             //std::cout << i << std::endl;
             _adapter->request();
         }

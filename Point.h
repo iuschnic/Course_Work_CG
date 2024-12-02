@@ -104,6 +104,22 @@ public:
         Point tmp(_x - p.get_x(), _y - p.get_y(), _z - p.get_z());
         return tmp;
     }
+    Point operator*(const Point &&p)
+    {
+        Point tmp;
+        tmp.set_x(_y * p.get_z() - _z * p.get_y());
+        tmp.set_y(_z * p.get_x() - _x * p.get_z());
+        tmp.set_z(_x * p.get_y() - _y * p.get_x());
+        return tmp;
+    }
+    Point operator*(const Point &p)
+    {
+        Point tmp;
+        tmp.set_x(_y * p.get_z() - _z * p.get_y());
+        tmp.set_y(_z * p.get_x() - _x * p.get_z());
+        tmp.set_z(_x * p.get_y() - _y * p.get_x());
+        return tmp;
+    }
     Point &operator*=(const double num)
     {
         _x *= num;
@@ -219,6 +235,14 @@ public:
         this->scale_x(center, kx);
         this->scale_y(center, ky);
         this->scale_z(center, kz);
+    }
+
+    void normalize()
+    {
+        double len = pow(pow(_x, 2) + pow(_y, 2) + pow(_z, 2), 0.5);
+        _x /= len;
+        _y /= len;
+        _z /= len;
     }
 
 private:

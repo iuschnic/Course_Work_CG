@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     auto cont = ui->graphicsView->contentsRect();
     auto id = std::make_shared<std::size_t>(0);
     Point location_cam(-cont.width() / 2.0, -cont.height() / 2.0, -500);
-    Point location_light(-300, 0, 0);
+    Point location_light(-300, 100, -200);
     _timer = new QTimer(this);
     connect(_timer, SIGNAL(timeout()), this, SLOT(simulate()));
     AddCameraCommand add_cam_cmd (location_cam, id);
@@ -108,7 +108,7 @@ void MainWindow::on_start_simulation_clicked()
 {
     //QTimer *timer = new QTimer(this);
     //connect(timer, SIGNAL(timeout()), this, SLOT(simulate()));
-    _timer->start(1000 / 20);
+    _timer->start(1000 / 30);
 
     /*StartSimulationCommand start_cmd(_drawer);
     _facade->execute(start_cmd);*/
@@ -118,10 +118,10 @@ void MainWindow::simulate()
 {
     //StartSimulationCommand start_cmd(_drawer);
     //_facade->execute(start_cmd);
-    //clock_t start = clock();
+    clock_t start = clock();
     SimIterationCommand sim(_drawer);
     _facade->execute(sim);
-    //printf("Time: %.6fs\n", (double) (clock() - start) / CLOCKS_PER_SEC);
+    printf("Time: %.6fs\n", (double) (clock() - start) / CLOCKS_PER_SEC);
 }
 
 

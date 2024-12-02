@@ -38,7 +38,7 @@ public:
     explicit QtDrawer(const std::shared_ptr<QGraphicsScene> &scene): _scene(scene)
     {
         _image = std::shared_ptr<QImage>(new QImage(_scene->width(), _scene->height(), QImage::Format_RGB32));
-        _scene->setBackgroundBrush(QBrush(QColor(0, 0, 0)));
+        _scene->setBackgroundBrush(QBrush(QColor(175, 218, 252)));
         _width = _scene->width();
         _height = _scene->height();
     }
@@ -47,7 +47,7 @@ public:
     {
         _lines.clear();
         _scene->clear();
-        _image->fill(QColor(0, 0, 0));
+        _image->fill(QColor(175, 218, 252));
     }
     virtual void draw() override
     {
@@ -60,14 +60,17 @@ public:
     {
         _lines.emplace_back(QLine(point1.get_x(), point1.get_y(), point2.get_x(), point2.get_y()), color);
     }
-    virtual void add_point(const Pixel &point, const QColor &color) override
+    virtual void add_point(const Pixel &point, QColor &color) override
     {
-        //auto c = color;
         if (point.get_x() < 0 || point.get_x() >= _width)
             return;
         if (point.get_y() < 0 || point.get_y() >= _height)
             return;
-        //c.setAlphaF(point.get_intensity());
+        //color.setAlphaF(point.get_intensity());
+        //color.lighter(100 * point.get_intensity());
+        float h, s, l, a;
+        color.getHslF(&h, &s, &l, &a);
+        color.setHslF(h, s, point.get_intensity(), a);
         _image->setPixelColor(QPoint(point.get_x(), point.get_y()), color);
     }
     virtual size_t get_height() const override

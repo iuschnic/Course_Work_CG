@@ -45,7 +45,7 @@ public:
             for (int i = 0; i < spheres.size(); i++)
             {
                 auto sphere = spheres[i];
-                //auto intensities = _intensities[i];
+                auto intensities = _intensities[i];
                 if (_adaptee->get_mass() < 0)
                 {
                     color.setRed(0);
@@ -82,9 +82,9 @@ public:
                         Pixel p0 = Pixel(t0);
                         Pixel p1 = Pixel(t1);
                         Pixel p2 = Pixel(t2);
-                        //p0.set_intensity(intensities[face[0]]);
-                        //p1.set_intensity(intensities[face[1]]);
-                        //p2.set_intensity(intensities[face[2]]);
+                        p0.set_intensity(intensities[face[0]]);
+                        p1.set_intensity(intensities[face[1]]);
+                        p2.set_intensity(intensities[face[2]]);
                         triangle(p0, p1, p2, color);
                     }
                     else if (face.size() == 4)
@@ -95,9 +95,9 @@ public:
                         Pixel p0 = Pixel(t0);
                         Pixel p1 = Pixel(t1);
                         Pixel p2 = Pixel(t2);
-                        //p0.set_intensity(intensities[face[1]]);
-                        //p1.set_intensity(intensities[face[2]]);
-                        //p2.set_intensity(intensities[face[3]]);
+                        p0.set_intensity(intensities[face[1]]);
+                        p1.set_intensity(intensities[face[2]]);
+                        p2.set_intensity(intensities[face[3]]);
                         /*std::cout << "FACE\n";
                         std::cout << face[1] << " " << face[2] << " " << face[3] << std::endl;
                         std::cout << t0.get_x() << " " << t0.get_y() << " " << t0.get_z() << std::endl;
@@ -110,9 +110,9 @@ public:
                         p0 = Pixel(t0);
                         p1 = Pixel(t1);
                         p2 = Pixel(t2);
-                        //p0.set_intensity(intensities[face[0]]);
-                        //p1.set_intensity(intensities[face[1]]);
-                        //p2.set_intensity(intensities[face[3]]);
+                        p0.set_intensity(intensities[face[0]]);
+                        p1.set_intensity(intensities[face[1]]);
+                        p2.set_intensity(intensities[face[3]]);
                         /*std::cout << "FACE\n";
                         std::cout << face[0] << " " << face[1] << " " << face[3] << std::endl;
                         std::cout << t0.get_x() << " " << t0.get_y() << " " << t0.get_z() << std::endl;
@@ -226,30 +226,30 @@ private:
             double dz1 = (t1.get_z() - t0.get_z()) / (t1.get_x() - t0.get_x() + 1);
             double dz2 = (t2.get_z() - t1.get_z()) / (t2.get_x() - t1.get_x() + 1);
             double z = t0.get_z();
-            //double di1 = (t1.get_intensity() - t0.get_intensity()) / (t1.get_x() - t0.get_x() + 1);
-            //double di2 = (t2.get_intensity() - t1.get_intensity()) / (t2.get_x() - t1.get_x() + 1);
-            //double i = t0.get_intensity();
+            double di1 = (t1.get_intensity() - t0.get_intensity()) / (t1.get_x() - t0.get_x() + 1);
+            double di2 = (t2.get_intensity() - t1.get_intensity()) / (t2.get_x() - t1.get_x() + 1);
+            double i = t0.get_intensity();
             for (int j = t0.get_x(); j <= t1.get_x(); j++) {
                 if (t0.get_y() >= _z_buf.size() || t0.get_y() < 0 || j < 0 || j >= _z_buf[0].size())
                     continue;
                 if (_z_buf[t0.get_y()][j] > z) {
                     _z_buf[t0.get_y()][j] = z;
-                    auto pixel = Pixel(j, t0.get_y(), z, 1);
+                    auto pixel = Pixel(j, t0.get_y(), z, i);
                     _drawer->add_point(pixel, color);
                 }
                 z += dz1;
-                //i += di1;
+                i += di1;
             }
             for (int j = t1.get_x(); j <= t2.get_x(); j++) {
                 if (t0.get_y() >= _z_buf.size() || t0.get_y() < 0 || j < 0 || j >= _z_buf[0].size())
                     continue;
                 if (_z_buf[t0.get_y()][j] > z) {
                     _z_buf[t0.get_y()][j] = z;
-                    auto pixel = Pixel(j, t0.get_y(), z, 1);
+                    auto pixel = Pixel(j, t0.get_y(), z, i);
                     _drawer->add_point(pixel, color);
                 }
                 z += dz2;
-                //i += di2;
+                i += di2;
             }
             return;
         }
@@ -257,12 +257,17 @@ private:
         if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
         if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
 
-        //Расчет инкрементов глубины при движении по оси y, двигаемся снизу вверх, от t0 к t1
+        //Расчет инкрементов глубины и интенсивности при движении по оси y, двигаемся снизу вверх, от t0 к t1
         double dz_y_0_1 = (t1.get_z() - t0.get_z()) / (t1.get_y() - t0.get_y() + 1); //Между t0 и t1
         double dz_y_0_2 = (t2.get_z() - t0.get_z()) / (t2.get_y() - t0.get_y() + 1); //Между t0 и t2
+        double di_y_0_1 = (t1.get_intensity() - t0.get_intensity()) / (t1.get_y() - t0.get_y() + 1);
+        double di_y_0_2 = (t2.get_intensity() - t0.get_intensity()) / (t2.get_y() - t0.get_y() + 1);
         double z0 = t0.get_z(); //начальное значение z
+        double i0 = t0.get_intensity();
         double z_0_1 = z0; //значение z на отрезке 0-1
         double z_0_2 = z0; //значение z на отрезке 0-2
+        double i_0_1 = i0;
+        double i_0_2 = i0;
         int total_height = t2.get_y() - t0.get_y();
         int segment_height = t1.get_y() - t0.get_y() + 1;
         for (int y = t0.get_y(); y <= t1.get_y(); y++) {
@@ -275,39 +280,49 @@ private:
             if (p_0_2.get_x() > p_0_1.get_x())
             {
                 double z_cur = z_0_1;
+                double i_cur = i_0_1;
                 double dz_x = (z_0_2 - z_0_1) / (p_0_2.get_x() - p_0_1.get_x() + 1);
+                double di_x = (i_0_2 - i_0_1) / (p_0_2.get_x() - p_0_1.get_x() + 1);
                 for (int j = p_0_1.get_x(); j <= p_0_2.get_x(); j++) {
                     if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
                         continue;
                     if (_z_buf[y][j] > z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0, 1);
+                        auto pixel = Pixel(j, y, 0, i_cur);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
+                    i_cur += di_x;
                 }
             }
             else
             {
                 double z_cur = z_0_2;
+                double i_cur = i_0_2;
                 double dz_x = (z_0_1 - z_0_2) / (p_0_1.get_x() - p_0_2.get_x() + 1);
+                double di_x = (i_0_1 - i_0_2) / (p_0_1.get_x() - p_0_2.get_x() + 1);
                 for (int j = p_0_2.get_x(); j <= p_0_1.get_x(); j++) {
                     if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
                         continue;
                     if (_z_buf[y][j] > z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0, 1);
+                        auto pixel = Pixel(j, y, 0, i_cur);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
+                    i_cur += di_x;
                 }
             }
             z_0_1 += dz_y_0_1;
             z_0_2 += dz_y_0_2;
+            i_0_1 += di_y_0_1;
+            i_0_2 += di_y_0_2;
         }
 
         double z_1_2 = t1.get_z(); //начальное значение z на отрезке 1-2
+        double i_1_2 = t1.get_intensity();
         double dz_y_1_2 = (t2.get_z() - t1.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t1 и t1
+        double di_y_1_2 = (t2.get_intensity() - t1.get_intensity()) / (t2.get_y() - t1.get_y() + 1);
         //z_0_2 остается тем же
         segment_height = t2.get_y() - t1.get_y() + 1;
         for (int y = t1.get_y(); y <= t2.get_y(); y++) {
@@ -320,35 +335,43 @@ private:
             if (p_0_2.get_x() > p_1_2.get_x())
             {
                 double z_cur = z_1_2;
+                double i_cur = i_1_2;
                 double dz_x = (z_0_2 - z_1_2) / (p_0_2.get_x() - p_1_2.get_x() + 1);
+                double di_x = (i_0_2 - i_1_2) / (p_0_2.get_x() - p_1_2.get_x() + 1);
                 for (int j = p_1_2.get_x(); j <= p_0_2.get_x(); j++) {
                     if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
                         continue;
                     if (_z_buf[y][j] >= z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0, 1);
+                        auto pixel = Pixel(j, y, 0, i_cur);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
+                    i_cur += di_x;
                 }
             }
             else
             {
                 double z_cur = z_0_2;
+                double i_cur = i_0_2;
                 double dz_x = (z_1_2 - z_0_2) / (p_1_2.get_x() - p_0_2.get_x() + 1);
+                double di_x = (i_1_2 - i_0_2) / (p_1_2.get_x() - p_0_2.get_x() + 1);
                 for (int j = p_0_2.get_x(); j <= p_1_2.get_x(); j++) {
                     if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
                         continue;
                     if (_z_buf[y][j] >= z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0, 1);
+                        auto pixel = Pixel(j, y, 0, i_cur);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
+                    i_cur += di_x;
                 }
             }
             z_1_2 += dz_y_1_2;
             z_0_2 += dz_y_0_2;
+            i_1_2 += di_y_1_2;
+            i_0_2 += di_y_0_2;
         }
     }
 

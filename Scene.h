@@ -15,11 +15,13 @@
 
 #define G 10
 #define TIME 1
-#define Ia 0.3
+#define Ia 0.25
 #define ka 1
 #define Il 1
-#define kd 0.9
-#define K 1
+#define kd 0.3
+#define ks 0.3
+#define ndeg 4
+#define K
 
 class Scene
 {
@@ -137,17 +139,19 @@ public:
         return speeds;
     }*/
 
-    std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(std::shared_ptr<PointLight> &light)
+    std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(const std::shared_ptr<PointLight> &light, const std::shared_ptr<PProjCamera> &camera)
     {
         std::map<std::size_t, std::vector<std::vector<double>>> intensities;
         auto l_center = light->get_center();
+        auto c_center = camera->get_center();
         for (const auto &[id, obj]: _visible_objects)
         {
             intensities[id] = {};
             auto object = std::static_pointer_cast<Object>(obj);
             auto spheres = object->get_spheres();
-            for (const auto &s: spheres)
+            for (int i = 0; i < spheres.size(); i++)
             {
+                auto s = spheres[i];
                 auto s_center = s->get_center();
                 auto points = s->get_points();
                 std::vector<double> sphere_intensities;
@@ -158,13 +162,32 @@ public:
                     auto n_vec = p - s_center;
                     double n_mod = pow(pow(n_vec.get_x(), 2) + pow(n_vec.get_y(), 2) + pow(n_vec.get_z(), 2), 0.5);
                     //вектор от точки до источника света
-                    auto l_vec = p - l_center;
+                    auto l_vec = l_center - p;
                     double l_mod = pow(pow(l_vec.get_x(), 2) + pow(l_vec.get_y(), 2) + pow(l_vec.get_z(), 2), 0.5);
+                    //вектор от точки до камеры
+                    auto c_vec = c_center - p;
+                    double c_mod = pow(pow(c_vec.get_x(), 2) + pow(c_vec.get_y(), 2) + pow(c_vec.get_z(), 2), 0.5);
+                    //нормализованный вектор нормали
+                    auto n_norm = n_vec;
+                    n_norm.normalize();
+                    //вектор падающего луча
+                    auto d_vec = l_vec * (-1);
+                    auto r_vec = d_vec - (d_vec * n_norm) * n_norm * 2;
+                    double r_mod = pow(pow(r_vec.get_x(), 2) + pow(r_vec.get_y(), 2) + pow(r_vec.get_z(), 2), 0.5);
                     double dist = pow(pow(p.get_x() - l_center.get_x(), 2) + pow(p.get_y() - l_center.get_y(), 2) + pow(p.get_z() - l_center.get_z(), 2), 0.5);
                     double cos_teta = (n_vec.get_x() * l_vec.get_x() + n_vec.get_y() * l_vec.get_y() + n_vec.get_z() * l_vec.get_z()) / (n_mod * l_mod);
-                    double intensity = Ia * ka + (Il * kd * cos_teta) / (K + dist);
+                    //std::cout << "cos teta " << cos_teta << std::endl;
+                    double cos_alpha = (r_vec.get_x() * n_vec.get_x() + r_vec.get_y() * n_vec.get_y() + r_vec.get_z() * n_vec.get_z()) / (r_mod * n_mod);
+                    //std::cout << "cos alpha " << cos_alpha << std::endl;
+                    //double intensity = Ia * ka + (Il * kd * cos_teta) / (K + dist / 100);
+                    //double intensity = Ia * ka + (Il * kd * cos_teta);
+                    //if (cos_alpha < 0)
+                    //    cos_alpha = 0;
+                    //if (cos_teta < 0)
+                    //    cos_teta = 0;
+                    double intensity = Ia * ka + Il * (kd * cos_teta + ks * pow(cos_alpha, ndeg));
                     sphere_intensities.push_back(intensity);
-                    std::cout << "I " << intensity << std::endl;
+                    //std::cout << "I " << intensity << std::endl;
                 }
                 intensities[id].push_back(sphere_intensities);
             }
