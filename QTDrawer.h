@@ -62,10 +62,12 @@ public:
     }
     virtual void add_point(const Pixel &point, const QColor &color) override
     {
+        //auto c = color;
         if (point.get_x() < 0 || point.get_x() >= _width)
             return;
         if (point.get_y() < 0 || point.get_y() >= _height)
             return;
+        //c.setAlphaF(point.get_intensity());
         _image->setPixelColor(QPoint(point.get_x(), point.get_y()), color);
     }
     virtual size_t get_height() const override

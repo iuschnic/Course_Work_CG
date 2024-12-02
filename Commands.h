@@ -67,25 +67,6 @@ private:
 };
 
 //Команды запуска и остановки симуляции
-class StartSimulationCommand: public BaseCommand
-{
-    using Action = void(SceneManager::*)(std::shared_ptr<BaseDrawer> drawer);
-
-public:
-    StartSimulationCommand(std::shared_ptr<BaseDrawer> drawer)
-    {
-        _method = &SceneManager::start_simulation;
-        _drawer = drawer;
-    }
-    virtual void execute() override
-    {
-        ((*_scene_manager).*_method)(_drawer);
-    }
-
-private:
-    Action _method;
-    std::shared_ptr<BaseDrawer> _drawer;
-};
 
 class SimIterationCommand: public BaseCommand
 {
@@ -105,24 +86,6 @@ public:
 private:
     Action _method;
     std::shared_ptr<BaseDrawer> _drawer;
-};
-
-class StopSimulationCommand: public BaseCommand
-{
-    using Action = void(SceneManager::*)();
-
-public:
-    StopSimulationCommand()
-    {
-        _method = &SceneManager::stop_simulation;
-    }
-    virtual void execute() override
-    {
-        ((*_scene_manager).*_method)();
-    }
-
-private:
-    Action _method;
 };
 
 //Команды добавления/удаления камер
@@ -290,6 +253,45 @@ public:
 
 private:
     std::size_t _id_camera;
+    Action _method;
+};
+
+class GetMainLightCommand : public BaseCommand
+{
+    using Action = std::shared_ptr<PointLight> (SceneManager::*)();
+
+public:
+    GetMainLightCommand(std::shared_ptr<PointLight> &light) : _light(light)
+    {
+        _method = &SceneManager::get_main_light;
+    }
+    virtual void execute() override
+    {
+        _light = ((*_scene_manager).*_method)();
+    }
+
+private:
+    std::shared_ptr<PointLight> &_light; // Нужна ли & ?
+    Action _method;
+};
+
+class SetMainLightCommand : public BaseCommand
+{
+    using Action = void(SceneManager::*)(const std::size_t id_light);
+
+public:
+    SetMainLightCommand(const std::size_t &id_light)
+    {
+        _id_light = id_light;
+        _method = &SceneManager::set_main_light;
+    }
+    virtual void execute() override
+    {
+        ((*_scene_manager).*_method)(_id_light);
+    }
+
+private:
+    std::size_t _id_light;
     Action _method;
 };
 

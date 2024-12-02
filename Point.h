@@ -231,47 +231,54 @@ class Pixel
 {
 public:
     Pixel() = default;
-    Pixel(const int x, const int y, const double z)
+    Pixel(const int x, const int y, const double z, const double intensity)
     {
         _x = x;
         _y = y;
         _z = z;
+        _intensity = intensity;
     }
-    Pixel(const double x, const double y, const double z)
+    Pixel(const double x, const double y, const double z, const double intensity)
     {
         _x = x;
         _y = y;
         _z = z;
+        _intensity = intensity;
     }
     Pixel(const Pixel &p)
     {
         _x = p._x;
         _y = p._y;
         _z = p._z;
+        _intensity = p.get_intensity();
     }
     Pixel(const Pixel &&p)
     {
         _x = p._x;
         _y = p._y;
         _z = p._z;
+        _intensity = p.get_intensity();
     }
     Pixel(const Point &p)
     {
         _x = p.get_x();
         _y = p.get_y();
         _z = p.get_z();
+        _intensity = 1;
     }
     Pixel(const Point &&p)
     {
         _x = p.get_x();
         _y = p.get_y();
         _z = p.get_z();
+        _intensity = 1;
     }
     Pixel &operator=(const Pixel &p)
     {
         _x = p._x;
         _y = p._y;
         _z = p._z;
+        _intensity = p._intensity;
         return *this;
     }
     Pixel &operator=(const Pixel &&p)
@@ -279,6 +286,7 @@ public:
         _x = p._x;
         _y = p._y;
         _z = p._z;
+        _intensity = p._intensity;
         return *this;
     }
     Pixel &operator+=(const Pixel &p)
@@ -295,12 +303,12 @@ public:
     }
     Pixel operator+(const Pixel &p)
     {
-        Pixel tmp(_x + p.get_x(), _y + p.get_y(), _z);
+        Pixel tmp(_x + p.get_x(), _y + p.get_y(), _z, 1);
         return tmp;
     }
     Pixel operator+(const Pixel &&p)
     {
-        Pixel tmp(_x + p.get_x(), _y + p.get_y(), _z);
+        Pixel tmp(_x + p.get_x(), _y + p.get_y(), _z, 1);
         return tmp;
     }
     Pixel &operator-=(const Pixel &p)
@@ -317,12 +325,12 @@ public:
     }
     Pixel operator-(const Pixel &p)
     {
-        Pixel tmp(_x - p.get_x(), _y - p.get_y(), _z);
+        Pixel tmp(_x - p.get_x(), _y - p.get_y(), _z, 1);
         return tmp;
     }
     Pixel operator-(const Pixel &&p)
     {
-        Pixel tmp(_x - p.get_x(), _y - p.get_y(), _z);
+        Pixel tmp(_x - p.get_x(), _y - p.get_y(), _z, 1);
         return tmp;
     }
     Pixel &operator*=(const double num)
@@ -333,7 +341,7 @@ public:
     }
     Pixel operator*(const double num)
     {
-        Pixel tmp(_x * num, _y * num, _z);
+        Pixel tmp(_x * num, _y * num, _z, 1);
         return tmp;
     }
     ~Pixel() = default;
@@ -341,9 +349,11 @@ public:
     int get_x() const {return _x;}
     int get_y() const {return _y;}
     double get_z() const {return _z;}
+    double get_intensity() const {return _intensity;}
     void set_x(const double x) {_x = x;}
     void set_y(const double y) {_y = y;}
     void set_z(const double z) {_z = z;}
+    void set_intensity(const double intensity) {_intensity = intensity;}
 
     bool operator==(const Pixel &p) {return this->is_equal(p);}
     bool is_equal(const Pixel &p)
@@ -361,6 +371,7 @@ private:
     int _x;
     int _y;
     double _z;
+    double _intensity;
 };
 
 #endif // POINT_H

@@ -5,6 +5,7 @@
 #include "Point.h"
 #include "VisibleObject.h"
 #include <memory>
+#include <vector>
 
 class Object: public VisibleObject
 {

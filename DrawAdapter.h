@@ -22,6 +22,10 @@ public:
         size_t width = _drawer->get_width();
         init_z_buf(height, width);
     }
+    void set_adaptee_intensities(std::vector<std::vector<double>> &intensities)
+    {
+        _intensities = intensities;
+    }
     std::shared_ptr<BaseCamera> get_camera() {return _camera;}
     std::shared_ptr<BaseDrawer> get_drawer() {return _drawer;}
     void request()
@@ -36,8 +40,12 @@ public:
         if (_adaptee && _camera && _drawer)
         {
             //std::cout << "OK\n";
-            for (const auto &sphere : _adaptee->get_spheres())
+            auto spheres = _adaptee->get_spheres();
+            //for (const auto &sphere : _adaptee->get_spheres())
+            for (int i = 0; i < spheres.size(); i++)
             {
+                auto sphere = spheres[i];
+                //auto intensities = _intensities[i];
                 if (_adaptee->get_mass() < 0)
                 {
                     color.setRed(0);
@@ -71,17 +79,15 @@ public:
                         Point t0 = get_projection(points[face[0]]);
                         Point t1 = get_projection(points[face[1]]);
                         Point t2 = get_projection(points[face[2]]);
-                        /*std::cout << "FACE\n";
-                        std::cout << face[0] << " " << face[1] << " " << face[2] << std::endl;
-                        std::cout << t0.get_x() << " " << t0.get_y() << " " << t0.get_z() << std::endl;
-                        std::cout << t1.get_x() << " " << t1.get_y() << " " << t1.get_z() << std::endl;
-                        std::cout << t2.get_x() << " " << t2.get_y() << " " << t2.get_z() << std::endl;*/
                         Pixel p0 = Pixel(t0);
                         Pixel p1 = Pixel(t1);
                         Pixel p2 = Pixel(t2);
+                        //p0.set_intensity(intensities[face[0]]);
+                        //p1.set_intensity(intensities[face[1]]);
+                        //p2.set_intensity(intensities[face[2]]);
                         triangle(p0, p1, p2, color);
                     }
-                    else if(face.size() == 4)
+                    else if (face.size() == 4)
                     {
                         Point t0 = get_projection(points[face[1]]);
                         Point t1 = get_projection(points[face[2]]);
@@ -89,6 +95,9 @@ public:
                         Pixel p0 = Pixel(t0);
                         Pixel p1 = Pixel(t1);
                         Pixel p2 = Pixel(t2);
+                        //p0.set_intensity(intensities[face[1]]);
+                        //p1.set_intensity(intensities[face[2]]);
+                        //p2.set_intensity(intensities[face[3]]);
                         /*std::cout << "FACE\n";
                         std::cout << face[1] << " " << face[2] << " " << face[3] << std::endl;
                         std::cout << t0.get_x() << " " << t0.get_y() << " " << t0.get_z() << std::endl;
@@ -101,6 +110,9 @@ public:
                         p0 = Pixel(t0);
                         p1 = Pixel(t1);
                         p2 = Pixel(t2);
+                        //p0.set_intensity(intensities[face[0]]);
+                        //p1.set_intensity(intensities[face[1]]);
+                        //p2.set_intensity(intensities[face[3]]);
                         /*std::cout << "FACE\n";
                         std::cout << face[0] << " " << face[1] << " " << face[3] << std::endl;
                         std::cout << t0.get_x() << " " << t0.get_y() << " " << t0.get_z() << std::endl;
@@ -118,11 +130,17 @@ public:
         _drawer->draw();
         clear_z_buf();
     }
+    void clear()
+    {
+        _drawer->clear();
+        clear_z_buf();
+    }
 private:
     std::shared_ptr<BaseCamera> _camera;
     std::shared_ptr<BaseDrawer> _drawer;
     std::shared_ptr<Object> _adaptee;
     std::vector<std::vector<double>> _z_buf;
+    std::vector<std::vector<double>> _intensities;
     Point get_projection(const Point &point)
     {
         return _camera->get_projection(point);
@@ -154,7 +172,7 @@ private:
         }
     }
 
-    void triangle5(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
+    /*void triangle5(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
         if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
         {
             if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
@@ -197,7 +215,7 @@ private:
                 _drawer->add_point(pixel, color);
             }
         }
-    }
+    }*/
 
     void triangle(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
         if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
@@ -208,25 +226,30 @@ private:
             double dz1 = (t1.get_z() - t0.get_z()) / (t1.get_x() - t0.get_x() + 1);
             double dz2 = (t2.get_z() - t1.get_z()) / (t2.get_x() - t1.get_x() + 1);
             double z = t0.get_z();
+            //double di1 = (t1.get_intensity() - t0.get_intensity()) / (t1.get_x() - t0.get_x() + 1);
+            //double di2 = (t2.get_intensity() - t1.get_intensity()) / (t2.get_x() - t1.get_x() + 1);
+            //double i = t0.get_intensity();
             for (int j = t0.get_x(); j <= t1.get_x(); j++) {
                 if (t0.get_y() >= _z_buf.size() || t0.get_y() < 0 || j < 0 || j >= _z_buf[0].size())
                     continue;
                 if (_z_buf[t0.get_y()][j] > z) {
                     _z_buf[t0.get_y()][j] = z;
-                    auto pixel = Pixel(j, t0.get_y(), z);
+                    auto pixel = Pixel(j, t0.get_y(), z, 1);
                     _drawer->add_point(pixel, color);
                 }
                 z += dz1;
+                //i += di1;
             }
             for (int j = t1.get_x(); j <= t2.get_x(); j++) {
                 if (t0.get_y() >= _z_buf.size() || t0.get_y() < 0 || j < 0 || j >= _z_buf[0].size())
                     continue;
                 if (_z_buf[t0.get_y()][j] > z) {
                     _z_buf[t0.get_y()][j] = z;
-                    auto pixel = Pixel(j, t0.get_y(), z);
+                    auto pixel = Pixel(j, t0.get_y(), z, 1);
                     _drawer->add_point(pixel, color);
                 }
                 z += dz2;
+                //i += di2;
             }
             return;
         }
@@ -258,7 +281,7 @@ private:
                         continue;
                     if (_z_buf[y][j] > z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0);
+                        auto pixel = Pixel(j, y, 0, 1);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
@@ -273,7 +296,7 @@ private:
                         continue;
                     if (_z_buf[y][j] > z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0);
+                        auto pixel = Pixel(j, y, 0, 1);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
@@ -303,7 +326,7 @@ private:
                         continue;
                     if (_z_buf[y][j] >= z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0);
+                        auto pixel = Pixel(j, y, 0, 1);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
@@ -318,7 +341,7 @@ private:
                         continue;
                     if (_z_buf[y][j] >= z_cur) {
                         _z_buf[y][j] = z_cur;
-                        auto pixel = Pixel(j, y, 0);
+                        auto pixel = Pixel(j, y, 0, 1);
                         _drawer->add_point(pixel, color);
                     }
                     z_cur += dz_x;
@@ -327,74 +350,9 @@ private:
             z_1_2 += dz_y_1_2;
             z_0_2 += dz_y_0_2;
         }
-
-        //Расчет инкрементов глубины при движении по оси y, двигаемся сверху вниз, от t2 к t1
-        /*double dz_y_2_1 = (t1.get_z() - t2.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t2 и t1
-        double dz_y_2_0 = (t0.get_z() - t2.get_z()) / (t2.get_y() - t0.get_y() + 1); //Между t2 и t0
-        z0 = t2.get_z(); //начальное значение z
-        z_a = z0;
-        z_b = z0;
-        segment_height = t2.get_y() - t1.get_y() + 1;
-        for (int y = t2.get_y(); y >= t1.get_y(); y--) {
-            float alpha = (float)(-y + t2.get_y()) / total_height;
-            float beta  = (float)(-y + t2.get_y()) / segment_height; // be careful with divisions by zero
-            Pixel A = t2 + (t0 - t2) * alpha;
-            Pixel B = t2 + (t1 - t2) * beta;
-            double dz_a = dz_y_2_1;
-            double dz_b = dz_y_2_0;
-            if (A.get_x() > B.get_x())
-            {
-                std::swap(A, B);
-                std::swap(dz_a, dz_b);
-            }
-            z_a += dz_a;
-            z_b += dz_b;
-            double dz_x = (z_b - z_a) / (B.get_x() - A.get_x() + 1);
-            double z_cur = z_a;
-            for (int j = A.get_x(); j <= B.get_x(); j++) {
-                if (_z_buf[y][j] >= z_cur) {
-                    _z_buf[y][j] = z_cur;
-                    auto pixel = Pixel(j, y, 0);
-                    _drawer->add_point(pixel, color);
-                }
-                z_cur += dz_x;
-            }
-        }*/
-        /*double dz_y_1_2 = (t2.get_z() - t1.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t2 и t1
-        //z0 = t2.get_z(); //начальное значение z
-        z_b = t1.get_z();
-        //z_a остается каким был
-        for (int y = t1.get_y(); y <= t2.get_y(); y++) {
-            int segment_height = t2.get_y() - t1.get_y() + 1;
-            double alpha = (double)(y - t0.get_y()) / total_height;
-            double beta  = (double)(y - t1.get_y()) / segment_height; // be careful with divisions by zero
-            Pixel A = t0 + (t2 - t0) * alpha;
-            Pixel B = t1 + (t2 - t1) * beta;
-            double dz_a = dz_y_0_2;
-            double dz_b = dz_y_1_2;
-            if (A.get_x() > B.get_x())
-            {
-                std::swap(A, B);
-                std::swap(dz_a, dz_b);
-            }
-            z_a += dz_a;
-            z_b += dz_b;
-            double dz_x = (z_b - z_a) / (B.get_x() - A.get_x() + 1);
-            double z_cur = z_a;
-            for (int j = A.get_x(); j <= B.get_x(); j++) {
-                if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
-                    continue;
-                if (_z_buf[y][j] >= z_cur) {
-                    _z_buf[y][j] = z_cur;
-                    auto pixel = Pixel(j, y, 0);
-                    _drawer->add_point(pixel, color);
-                }
-                z_cur += dz_x;
-            }
-        }*/
     }
 
-    void triangle_0(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
+    /*void triangle_0(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
         if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
         {
             if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
@@ -443,107 +401,7 @@ private:
                 _drawer->add_point(pixel, color);
             }
         }
-    }
-
-
-    void triangle_1(Pixel &t0, Pixel &t1, Pixel &t2, QColor &color) {
-        if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
-        {
-            if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
-            if (t0.get_x() > t2.get_x()) std::swap(t0, t2);
-            if (t1.get_x() > t2.get_x()) std::swap(t1, t2);
-            double dz = (t2.get_z() - t0.get_z()) / (t2.get_x() - t0.get_x() + 1);
-            double z = t0.get_z();
-            for (int j = t0.get_x(); j <= t2.get_x(); j++) {
-                if (_z_buf[t0.get_y()][j] >= z) {
-                    _z_buf[t0.get_y()][j] = z;
-                    auto pixel = Pixel(j, t0.get_y(), z);
-                    _drawer->add_point(pixel, color);
-                }
-                z += dz;
-            }
-            return; // i dont care about degenerate triangles
-        }
-        /*// sort the vertices, t0, t1, t2 lower-to-upper (bubblesort yay!)
-        if (t0.get_y() > t1.get_y()) std::swap(t0, t1);
-        if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
-        if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
-        int total_height = t2.get_y() - t0.get_y();
-        for (int i = 0; i < total_height; i++) {
-            bool second_half = i > t1.get_y() - t0.get_y() || t1.get_y() == t0.get_y();
-            int segment_height = second_half ? t2.get_y() - t1.get_y() : t1.get_y() - t0.get_y();
-            float alpha = (float) i / total_height;
-            float beta  = (float) (i - (second_half ? t1.get_y() - t0.get_y() : 0)) / segment_height; // be careful: with above conditions no division by zero here
-            Pixel A = t0 + (t2 - t0) * alpha;
-            Pixel B = second_half ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
-            if (A.get_x() > B.get_x()) std::swap(A, B);
-            for (int j = A.get_x(); j <= B.get_x(); j++) {
-                //image.set(j, t0.get_y()+i, color); // attention, due to int casts t0.get_y()+i != A.get_y()
-                auto pixel = Pixel(j, t0.get_y() + i, 0);
-                _drawer->addPoint(pixel, color);
-            }
-        }*/
-
-        /*// sort the vertices, t0, t1, t2 lower-to-upper (bubblesort yay!)
-        if (t0.get_y() > t1.get_y()) std::swap(t0, t1);
-        if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
-        if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
-
-        int total_height = t2.get_y() - t0.get_y();
-        for (int y = t0.get_y(); y <= t1.get_y(); y++) {
-            int segment_height = t1.get_y() - t0.get_y() + 1;
-            float alpha = (float)(y - t0.get_y()) / total_height;
-            float beta  = (float)(y - t0.get_y()) / segment_height; // be careful with divisions by zero
-            Pixel A = t0 + (t2 - t0) * alpha;
-            Pixel B = t0 + (t1 - t0) * beta;
-            if (A.get_x() > B.get_x()) std::swap(A, B);
-            for (int j = A.get_x(); j <= B.get_x(); j++) {
-                //image.set(j, y, color); // attention, due to int casts t0.get_y()+i != A.get_y()
-                auto pixel = Pixel(j, y, 0);
-                _drawer->add_point(pixel, color);
-            }
-        }
-        for (int y = t1.get_y(); y <= t2.get_y(); y++) {
-            int segment_height = t2.get_y() - t1.get_y() + 1;
-            float alpha = (float)(y - t0.get_y()) / total_height;
-            float beta  = (float)(y - t1.get_y()) / segment_height; // be careful with divisions by zero
-            Pixel A = t0 + (t2 - t0) * alpha;
-            Pixel B = t1 + (t2 - t1) * beta;
-            if (A.get_x() > B.get_x()) std::swap(A, B);
-            for (int j = A.get_x(); j <= B.get_x(); j++) {
-                //image.set(j, y, color); // attention, due to int casts t0.get_y()+i != A.get_y()
-                auto pixel = Pixel(j, y, 0);
-                _drawer->add_point(pixel, color);
-            }
-        }*/
-        if (t0.get_y() > t1.get_y()) std::swap(t0, t1);
-        if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
-        if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
-        int total_height = t2.get_y() - t0.get_y();
-        for (int i = 0; i < total_height; i++) {
-            bool second_half = i > t1.get_y() - t0.get_y() || t1.get_y() == t0.get_y();
-            int segment_height = second_half ? t2.get_y() - t1.get_y() : t1.get_y() - t0.get_y();
-            double alpha = (double) i / total_height;
-            double beta  = (double) (i - (second_half ? t1.get_y() - t0.get_y() : 0)) / segment_height; // be careful: with above conditions no division by zero here
-            //Pixel A = t0 + (t2 - t0) * alpha;
-            Pixel A = t0 + Point(t2.get_x() - t0.get_x(), t2.get_y() - t0.get_y(), t2.get_z() - t0.get_z()) * alpha;
-            //Pixel B = second_half ? t1 + (t2 - t1) * beta : t0 + (t1 - t0) * beta;
-            Pixel B = second_half ? t1 + Point(t2.get_x() - t1.get_x(), t2.get_y() - t1.get_y(), t2.get_z() - t1.get_z())
-                * beta : t0 + Point(t1.get_x() - t0.get_x(), t1.get_y() - t0.get_y(), t1.get_z() - t0.get_z()) * beta;
-            if (A.get_x() > B.get_x()) std::swap(A, B);
-            for (int j = A.get_x(); j <= B.get_x(); j++) {
-                double phi = B.get_x() == A.get_x() ? 1. : (double)(j - A.get_x()) / (double)(B.get_x() - A.get_x());
-                //Pixel P = A + (B - A) * phi;
-                Pixel P = Point(A.get_x(), A.get_y(), A.get_z()) + Point(B.get_x() - A.get_x(), B.get_y() - A.get_y(), B.get_z() - A.get_z()) * phi;
-                //int idx = P.get_x() + P.get_y() * width;
-                if (_z_buf[P.get_y()][P.get_x()] >= P.get_z()) {
-                    _z_buf[P.get_y()][P.get_x()] = P.get_z();
-                    //image.set(P.get_x(), P.get_y(), color);
-                    _drawer->add_point(P, color);
-                }
-            }
-        }
-    }
+    }*/
 };
 
 #endif // DRAW_ADAPTER_H

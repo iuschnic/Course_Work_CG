@@ -15,6 +15,11 @@
 
 #define G 10
 #define TIME 1
+#define Ia 0.3
+#define ka 1
+#define Il 1
+#define kd 0.9
+#define K 1
 
 class Scene
 {
@@ -131,6 +136,41 @@ public:
         }
         return speeds;
     }*/
+
+    std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(std::shared_ptr<PointLight> &light)
+    {
+        std::map<std::size_t, std::vector<std::vector<double>>> intensities;
+        auto l_center = light->get_center();
+        for (const auto &[id, obj]: _visible_objects)
+        {
+            intensities[id] = {};
+            auto object = std::static_pointer_cast<Object>(obj);
+            auto spheres = object->get_spheres();
+            for (const auto &s: spheres)
+            {
+                auto s_center = s->get_center();
+                auto points = s->get_points();
+                std::vector<double> sphere_intensities;
+                for (int i = 0; i < points.size(); i++)
+                {
+                    auto p = points[i];
+                    //вектор нормали к сфере в данной точке
+                    auto n_vec = p - s_center;
+                    double n_mod = pow(pow(n_vec.get_x(), 2) + pow(n_vec.get_y(), 2) + pow(n_vec.get_z(), 2), 0.5);
+                    //вектор от точки до источника света
+                    auto l_vec = p - l_center;
+                    double l_mod = pow(pow(l_vec.get_x(), 2) + pow(l_vec.get_y(), 2) + pow(l_vec.get_z(), 2), 0.5);
+                    double dist = pow(pow(p.get_x() - l_center.get_x(), 2) + pow(p.get_y() - l_center.get_y(), 2) + pow(p.get_z() - l_center.get_z(), 2), 0.5);
+                    double cos_teta = (n_vec.get_x() * l_vec.get_x() + n_vec.get_y() * l_vec.get_y() + n_vec.get_z() * l_vec.get_z()) / (n_mod * l_mod);
+                    double intensity = Ia * ka + (Il * kd * cos_teta) / (K + dist);
+                    sphere_intensities.push_back(intensity);
+                    std::cout << "I " << intensity << std::endl;
+                }
+                intensities[id].push_back(sphere_intensities);
+            }
+        }
+        return intensities;
+    }
 
     //Метод для обработки столкновений объектов в сцене
     void process_collisions()

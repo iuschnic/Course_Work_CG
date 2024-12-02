@@ -12,6 +12,7 @@ public:
     SceneManager()
     {
         _camera = nullptr;
+        _light = nullptr;
         _scene = std::make_shared<Scene>(Scene());
         _adapter = std::make_shared<DrawAdapter>(DrawAdapter());
         _sim_flag = 0;
@@ -23,10 +24,16 @@ public:
         std::shared_ptr<InvisibleObject> cam = _scene->get_camera(cam_id);
         auto cam_pnt = std::dynamic_pointer_cast<PProjCamera>(cam);
         _camera = cam_pnt;
-        _scene->set_cam_index(cam_id);
+        //_scene->set_cam_index(cam_id);
     }
-
     std::shared_ptr<PProjCamera> get_main_camera() {return _camera;}
+    void set_main_light(const std::size_t light_id)
+    {
+        std::shared_ptr<InvisibleObject> light = _scene->get_light(light_id);
+        auto light_pnt = std::dynamic_pointer_cast<PointLight>(light);
+        _light = light_pnt;
+    }
+    std::shared_ptr<PointLight> get_main_light() {return _light;}
     std::size_t add_object(std::shared_ptr<VisibleObject> &object)
     {
         return _scene->add_object(object);
@@ -54,37 +61,24 @@ public:
         _scene->delete_light(id_light);
     }
 
-    void start_simulation(std::shared_ptr<BaseDrawer> drawer)
-    {
-        //std::cout << "in simulation\n";
-        _adapter->set_drawer(drawer);
-        _adapter->set_camera(_camera);
-        _sim_flag = 1;
-        for (int i = 0; i < 10; i++)
-        {
-            drawer->clear();
-            _scene->sim_iteration();
-            draw();
-        }
-    }
-
     void sim_iteration(std::shared_ptr<BaseDrawer> drawer)
     {
-        drawer->clear();
+        //std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light);
+        _adapter->set_drawer(drawer);
+        _adapter->set_camera(_camera);
+        _adapter->clear();
         _scene->sim_iteration();
+        //draw(intensities);
         draw();
-    }
-
-    void stop_simulation()
-    {
-        _sim_flag = 0;
     }
 
     void draw_scene(std::shared_ptr<BaseDrawer> drawer)
     {
         //std::cout << "in draw_scene method\n";
+        //std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light);
         _adapter->set_drawer(drawer);
         _adapter->set_camera(_camera);
+        //draw(intensities);
         draw();
     }
 
@@ -104,18 +98,36 @@ public:
 
 private:
     std::shared_ptr<PProjCamera> _camera;
+    std::shared_ptr<PointLight> _light;
     std::shared_ptr<Scene> _scene;
     std::shared_ptr<DrawAdapter> _adapter;
     int _sim_flag;
 
-    void draw()
+    /*void draw(std::map<std::size_t, std::vector<std::vector<double>>> &intensities)
     {
         //std::cout << "in draw method\n";
         for (const auto &kv : _scene->_visible_objects)
         {
+            auto i = intensities[kv.first];
             auto obj_ptr = std::dynamic_pointer_cast<Object>(kv.second);
             //std::cout << obj_ptr->get_mass() << std::endl;
             _adapter->set_adaptee(obj_ptr);
+            _adapter->set_adaptee_intensities(i);
+            //std::cout << i << std::endl;
+            _adapter->request();
+        }
+        _adapter->draw();
+    }*/
+    void draw()
+    {
+        for (const auto &kv : _scene->_visible_objects)
+        {
+            //auto i = intensities[kv.first];
+            auto obj_ptr = std::dynamic_pointer_cast<Object>(kv.second);
+            //std::cout << obj_ptr->get_mass() << std::endl;
+            _adapter->set_adaptee(obj_ptr);
+            //_adapter->set_adaptee_intensities(i);
+            //std::cout << i << std::endl;
             _adapter->request();
         }
         _adapter->draw();
