@@ -15,13 +15,6 @@
 
 #define G 10
 #define TIME 1
-#define Ia 0.25
-#define ka 1
-#define Il 1
-#define kd 0.3
-#define ks 0.3
-#define ndeg 4
-#define K
 
 class Scene
 {
@@ -139,7 +132,7 @@ public:
         return speeds;
     }*/
 
-    std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(const std::shared_ptr<PointLight> &light, const std::shared_ptr<PProjCamera> &camera)
+    /*std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(const std::shared_ptr<PointLight> &light, const std::shared_ptr<PProjCamera> &camera)
     {
         std::map<std::size_t, std::vector<std::vector<double>>> intensities;
         auto l_center = light->get_center();
@@ -171,8 +164,8 @@ public:
                     auto n_norm = n_vec;
                     n_norm.normalize();
                     //вектор падающего луча
-                    auto d_vec = l_vec * (-1);
-                    auto r_vec = d_vec - (d_vec * n_norm) * n_norm * 2;
+                    //auto d_vec = l_vec * (-1);
+                    auto r_vec = l_vec - (l_vec * n_norm) * n_norm * 2;
                     double r_mod = pow(pow(r_vec.get_x(), 2) + pow(r_vec.get_y(), 2) + pow(r_vec.get_z(), 2), 0.5);
                     double dist = pow(pow(p.get_x() - l_center.get_x(), 2) + pow(p.get_y() - l_center.get_y(), 2) + pow(p.get_z() - l_center.get_z(), 2), 0.5);
                     double cos_teta = (n_vec.get_x() * l_vec.get_x() + n_vec.get_y() * l_vec.get_y() + n_vec.get_z() * l_vec.get_z()) / (n_mod * l_mod);
@@ -181,10 +174,10 @@ public:
                     //std::cout << "cos alpha " << cos_alpha << std::endl;
                     //double intensity = Ia * ka + (Il * kd * cos_teta) / (K + dist / 100);
                     //double intensity = Ia * ka + (Il * kd * cos_teta);
-                    //if (cos_alpha < 0)
-                    //    cos_alpha = 0;
-                    //if (cos_teta < 0)
-                    //    cos_teta = 0;
+                    if (cos_alpha < 0)
+                        cos_alpha = 0;
+                    if (cos_teta < 0)
+                        cos_teta = 0;
                     double intensity = Ia * ka + Il * (kd * cos_teta + ks * pow(cos_alpha, ndeg));
                     sphere_intensities.push_back(intensity);
                     //std::cout << "I " << intensity << std::endl;
@@ -193,7 +186,7 @@ public:
             }
         }
         return intensities;
-    }
+    }*/
 
     //Метод для обработки столкновений объектов в сцене
     void process_collisions()

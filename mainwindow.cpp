@@ -11,10 +11,10 @@ MainWindow::MainWindow(QWidget *parent)
 
     _facade = std::make_shared<Facade>(Facade());
 
-    auto cont = ui->graphicsView->contentsRect();
     auto id = std::make_shared<std::size_t>(0);
-    Point location_cam(-cont.width() / 2.0, -cont.height() / 2.0, -500);
-    Point location_light(-300, 100, -200);
+    Point location_cam(0, 0, -500);
+    Point location_light(-300, 0, -300);
+    //Point location_light(0, 0, -500);
     _timer = new QTimer(this);
     connect(_timer, SIGNAL(timeout()), this, SLOT(simulate()));
     AddCameraCommand add_cam_cmd (location_cam, id);

@@ -6,6 +6,14 @@
 #include <vector>
 #include <iostream>
 
+#define Ia 0.15
+#define ka 1
+#define Il 1
+#define kd 0.4
+#define ks 0.4
+#define ndeg 5
+#define K 1
+
 class SceneManager
 {
 public:
@@ -68,7 +76,7 @@ public:
         _adapter->set_camera(_camera);
         _adapter->clear();
         _scene->sim_iteration();
-        std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light, _camera);
+        std::map<std::size_t, std::vector<std::vector<double>>> intensities = calc_intensities(_light, _camera);
         draw(intensities);
         //draw();
     }
@@ -76,7 +84,7 @@ public:
     void draw_scene(std::shared_ptr<BaseDrawer> drawer)
     {
         //std::cout << "in draw_scene method\n";
-        std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light, _camera);
+        std::map<std::size_t, std::vector<std::vector<double>>> intensities = calc_intensities(_light, _camera);
         _adapter->set_drawer(drawer);
         _adapter->set_camera(_camera);
         draw(intensities);
@@ -118,6 +126,60 @@ private:
             _adapter->request();
         }
         _adapter->draw();
+    }
+
+    std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(const std::shared_ptr<PointLight> &light, const std::shared_ptr<PProjCamera> &camera)
+    {
+        std::map<std::size_t, std::vector<std::vector<double>>> intensities;
+        auto l_center = light->get_center();
+        auto c_center = camera->get_center();
+        for (const auto &[id, obj]: _scene->_visible_objects)
+        {
+            intensities[id] = {};
+            auto object = std::static_pointer_cast<Object>(obj);
+            auto spheres = object->get_spheres();
+            for (int i = 0; i < spheres.size(); i++)
+            {
+                auto s = spheres[i];
+                auto s_center = s->get_center();
+                auto points = s->get_points();
+                std::vector<double> sphere_intensities;
+                for (int i = 0; i < points.size(); i++)
+                {
+                    auto p = points[i];
+                    //вектор нормали к сфере в данной точке
+                    auto n_vec = p - s_center;
+                    double n_mod = pow(pow(n_vec.get_x(), 2) + pow(n_vec.get_y(), 2) + pow(n_vec.get_z(), 2), 0.5);
+                    //вектор от точки до источника света
+                    auto l_vec = l_center - p;
+                    double l_mod = pow(pow(l_vec.get_x(), 2) + pow(l_vec.get_y(), 2) + pow(l_vec.get_z(), 2), 0.5);
+                    //вектор от точки до камеры
+                    auto c_vec = c_center - p;
+                    double c_mod = pow(pow(c_vec.get_x(), 2) + pow(c_vec.get_y(), 2) + pow(c_vec.get_z(), 2), 0.5);
+                    //нормализованный вектор нормали
+                    auto n_norm = n_vec;
+                    n_norm.normalize();
+                    //вектор падающего луча
+                    auto f_vec = l_vec * (-1);
+                    //вектор отражения
+                    double scalar_f_n = f_vec.get_x() * n_norm.get_x() + f_vec.get_y() * n_norm.get_y() + f_vec.get_z() * n_norm.get_z();
+                    auto r_vec = f_vec - n_norm * 2 * scalar_f_n;
+                    double r_mod = pow(pow(r_vec.get_x(), 2) + pow(r_vec.get_y(), 2) + pow(r_vec.get_z(), 2), 0.5);
+                    //double dist = pow(pow(p.get_x() - l_center.get_x(), 2) + pow(p.get_y() - l_center.get_y(), 2) + pow(p.get_z() - l_center.get_z(), 2), 0.5);
+                    double cos_teta = (n_vec.get_x() * l_vec.get_x() + n_vec.get_y() * l_vec.get_y() + n_vec.get_z() * l_vec.get_z()) / (n_mod * l_mod);
+                    double cos_alpha = (r_vec.get_x() * c_vec.get_x() + r_vec.get_y() * c_vec.get_y() + r_vec.get_z() * c_vec.get_z()) / (r_mod * c_mod);
+                    if (cos_alpha < 0)
+                        cos_alpha = 0;
+                    if (cos_teta < 0)
+                        cos_teta = 0;
+                    double intensity = Ia * ka + Il * (kd * cos_teta + ks * pow(cos_alpha, ndeg));
+                    sphere_intensities.push_back(intensity);
+                    //std::cout << "I " << intensity << std::endl;
+                }
+                intensities[id].push_back(sphere_intensities);
+            }
+        }
+        return intensities;
     }
 };
 

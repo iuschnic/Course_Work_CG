@@ -73,29 +73,9 @@ public:
     {
         std::vector<std::shared_ptr<Sphere>> spheres_obj = obj->get_spheres();
         for (const auto &sp1: _spheres)
-        {
             for (const auto &sp2: spheres_obj)
-            {
-                /*std::cout << "TWO SPHERES:\n";
-                std::cout << sp1->get_center().get_x() << std::endl;
-                std::cout << sp1->get_center().get_y() << std::endl;
-                std::cout << sp1->get_center().get_z() << std::endl;
-                std::cout << sp2->get_center().get_x() << std::endl;
-                std::cout << sp2->get_center().get_y() << std::endl;
-                std::cout << sp2->get_center().get_z() << std::endl;*/
                 if (sp1->check_intersection(*sp2))
-                {
-                    std::cout << "FOUND INTERSECTION AMONG:\n";
-                    std::cout << sp1->get_center().get_x() << std::endl;
-                    std::cout << sp1->get_center().get_y() << std::endl;
-                    std::cout << sp1->get_center().get_z() << std::endl;
-                    std::cout << sp2->get_center().get_x() << std::endl;
-                    std::cout << sp2->get_center().get_y() << std::endl;
-                    std::cout << sp2->get_center().get_z() << std::endl;
                     return true;
-                }
-            }
-        }
         return false;
     }
 

@@ -147,6 +147,7 @@ public:
         _x /= num;
         _y /= num;
         _z /= num;
+        return *this;
     }
     Point operator/(const double num)
     {
@@ -237,12 +238,13 @@ public:
         this->scale_z(center, kz);
     }
 
-    void normalize()
+    Point normalize()
     {
         double len = pow(pow(_x, 2) + pow(_y, 2) + pow(_z, 2), 0.5);
         _x /= len;
         _y /= len;
         _z /= len;
+        return *this;
     }
 
 private:
