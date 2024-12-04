@@ -27,16 +27,15 @@ public:
         _visible_objects[object->get_id()] = object;
         return object->get_id();
     }
-    std::size_t add_camera(const Point &location)
+    std::size_t add_camera(const Point &center, const Point &direction, const Point &up)
     {
-        auto cam = std::make_shared<PProjCamera>(PProjCamera(location));
+        auto cam = std::make_shared<PProjCamera>(PProjCamera(center, direction, up));
         _invisible_objects.insert({cam->get_id(), cam});
         return cam->get_id();
     }
-    std::size_t add_light(const Point &location)
+    std::size_t add_light(const Point &center, const Point &direction, const Point &up)
     {
-        auto light = std::make_shared<PointLight>(PointLight(location));
-        //auto light = std::make_shared<PProjCamera>(PProjCamera(location));
+        auto light = std::make_shared<PointLight>(PointLight(center, direction, up));
         _invisible_objects.insert({light->get_id(), light});
         return light->get_id();
     }

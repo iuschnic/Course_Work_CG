@@ -17,6 +17,7 @@ public:
         m[0][0] = p.get_x();
         m[1][0] = p.get_y();
         m[2][0] = p.get_z();
+        m[3][0] = 1;
     }
     int nrows() {return rows;}
     int ncols() {return cols;}

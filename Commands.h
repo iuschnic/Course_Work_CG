@@ -91,22 +91,26 @@ private:
 //Команды добавления/удаления камер
 class AddCameraCommand : public BaseCommand
 {
-    using Action = std::size_t(SceneManager::*)(const Point &location);
+    using Action = std::size_t(SceneManager::*)(const Point &center, const Point &direction, const Point &up);
 
 public:
-    AddCameraCommand(const Point &location, std::shared_ptr<std::size_t> &id)
+    AddCameraCommand(const Point &center, const Point &direction, const Point &up, std::shared_ptr<std::size_t> &id)
     {
         _id = id;
-        _location = location;
+        _center = center;
+        _direction = direction;
+        _up = up;
         _method = &SceneManager::add_camera;
     }
     virtual void execute() override
     {
-        (*_id) = ((*_scene_manager).*_method)(_location);
+        (*_id) = ((*_scene_manager).*_method)(_center, _direction, _up);
     }
 
 private:
-    Point _location;
+    Point _center;
+    Point _direction;
+    Point _up;
     std::shared_ptr<std::size_t> _id;
     Action _method;
 };
@@ -134,22 +138,26 @@ private:
 //Команды добавления/удаления света
 class AddLightCommand : public BaseCommand
 {
-    using Action = std::size_t(SceneManager::*)(const Point &location);
+    using Action = std::size_t(SceneManager::*)(const Point &center, const Point &direction, const Point &up);
 
 public:
-    AddLightCommand(const Point &location, std::shared_ptr<std::size_t> &id)
+    AddLightCommand(const Point &center, const Point &direction, const Point &up, std::shared_ptr<std::size_t> &id)
     {
         _id = id;
-        _location = location;
+        _center = center;
+        _direction = direction;
+        _up = up;
         _method = &SceneManager::add_light;
     }
     virtual void execute() override
     {
-        (*_id) = ((*_scene_manager).*_method)(_location);
+        (*_id) = ((*_scene_manager).*_method)(_center, _direction, _up);
     }
 
 private:
-    Point _location;
+    Point _center;
+    Point _direction;
+    Point _up;
     std::shared_ptr<std::size_t> _id;
     Action _method;
 };

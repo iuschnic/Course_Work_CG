@@ -13,6 +13,7 @@ public:
     }
     virtual ~BaseCamera() = default;
     virtual Point& get_direction() = 0;
+    virtual Point& get_center() = 0;
     virtual Point get_projection(const Point &point) = 0;
 };
 
