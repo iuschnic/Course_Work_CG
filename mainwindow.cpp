@@ -19,8 +19,6 @@ MainWindow::MainWindow(QWidget *parent)
     Point up_cam(0, 1, 0);
     Point location_light(400, 0, 0);
     Point direction_light(-1, 0, 0);
-    //Point location_light(-400, 0, -100);
-    //Point direction_light(1, 0, 0);
     Point up_light(0, 1, 0);
     //Point location_light(0, 0, -500);
     _timer = new QTimer(this);

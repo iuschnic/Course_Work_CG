@@ -23,8 +23,8 @@ public:
     virtual void draw() = 0;
     virtual void add_line(const Point &point1, const Point &point2, const QColor &color) = 0;
     virtual void add_point(const Pixel &point, QColor &color) = 0;
-    virtual size_t get_height() const = 0;
-    virtual size_t get_width() const = 0;
+    virtual int get_height() const = 0;
+    virtual int get_width() const = 0;
 };
 
 #endif // BASEDRAWER_H

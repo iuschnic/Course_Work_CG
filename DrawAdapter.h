@@ -5,7 +5,10 @@
 #include <limits>
 #include "QTDrawer.h"
 #include "PerspectiveProjCamera.h"
+#include "PointLight.h"
 #include "Object.h"
+#define Ia 0.1
+#define ka 1
 
 class DrawAdapter
 {
@@ -14,6 +17,7 @@ public:
     ~DrawAdapter() = default;
     void set_adaptee(std::shared_ptr<Object> adaptee) {_adaptee = adaptee;}
     void set_camera(std::shared_ptr<BaseCamera> camera) {_camera = camera;}
+    void set_light(std::shared_ptr<PointLight> light) {_light = light;}
     void set_drawer(std::shared_ptr<BaseDrawer> drawer)
     {
         _z_buf.clear();
@@ -31,6 +35,7 @@ public:
         _shade_buf = buf;
     }
     std::shared_ptr<BaseCamera> get_camera() {return _camera;}
+    std::shared_ptr<PointLight> get_light() {return _light;}
     std::shared_ptr<BaseDrawer> get_drawer() {return _drawer;}
     void request()
     {
@@ -112,6 +117,7 @@ public:
     }
 private:
     std::shared_ptr<BaseCamera> _camera;
+    std::shared_ptr<PointLight> _light;
     std::shared_ptr<BaseDrawer> _drawer;
     std::shared_ptr<Object> _adaptee;
     std::vector<std::vector<double>> _z_buf;
@@ -149,14 +155,16 @@ private:
         }
     }
 
-    void triangle(Point &pp0, Point &pp1, Point &pp2, QColor &color, double &i0, double &i1, double &i2) {
+    void triangle(Point p0, Point p1, Point p2, QColor &color, double &i0, double &i1, double &i2) {
         //std::cout << "size1 " << _shade_buf.size() << " " << _shade_buf[0].size() << std::endl;
-        Point p0 = get_projection(pp0);
-        Point p1 = get_projection(pp1);
-        Point p2 = get_projection(pp2);
-        Pixel t0 = Pixel(p0);
-        Pixel t1 = Pixel(p1);
-        Pixel t2 = Pixel(p2);
+        int size_y = (int) _z_buf.size();
+        int size_x = (int) (_z_buf[0]).size();
+        Point pp0 = get_projection(p0);
+        Point pp1 = get_projection(p1);
+        Point pp2 = get_projection(p2);
+        Pixel t0 = Pixel(pp0);
+        Pixel t1 = Pixel(pp1);
+        Pixel t2 = Pixel(pp2);
         int height = _drawer->get_height() / 2;
         int width = _drawer->get_width() / 2;
         //std::cout << "WH " << width << " " << height << std::endl;
@@ -204,64 +212,58 @@ private:
             double di2 = (t2.get_intensity() - t1.get_intensity()) / (t2.get_x() - t1.get_x() + 1);
             double i = t0.get_intensity();
             for (int j = t0.get_x(); j <= t1.get_x(); j++) {
-                if (t0.get_y() >= _z_buf.size() || t0.get_y() < 0 || j < 0 || j >= _z_buf[0].size())
-                    continue;
-                if (_z_buf[t0.get_y()][j] > z) {
-                    _z_buf[t0.get_y()][j] = z;
-                    auto m_point = Matrix(cur);
-                    Matrix to_light_coords = _to_light * m_point;
-                    //int sx = to_light_coords[0][0] + width;
-                    //int sy = to_light_coords[1][0] + height;
-                    int sx = to_light_coords[0][0];
-                    int sy = to_light_coords[1][0];
-                    double sz = to_light_coords[2][0];
-                    if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
-                        std::cout << sx << " " << sy << " " << sz << std::endl;
-                    if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
-                    {
-                        auto pixel = Pixel(j, t0.get_y(), z, 0.1);
-                        _drawer->add_point(pixel, color);
-                    }
-                    else
-                    {
+                if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
+                    if (_z_buf[t0.get_y()][j] > z) {
+                        _z_buf[t0.get_y()][j] = z;
+                        /*auto l_proj = _light->get_projection(cur);
+                        int sx = l_proj.get_x() + width;
+                        int sy = l_proj.get_y() + height;
+                        double sz = l_proj.get_z();
+                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
+                            std::cout << sx << " " << sy << " " << sz << std::endl;
+                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
+                        {
+                            //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
+                            auto pixel = Pixel(j, t0.get_y(), z, Ia * ka);
+                            _drawer->add_point(pixel, color);
+                        }
+                        else
+                        {
+                            auto pixel = Pixel(j, t0.get_y(), z, i);
+                            _drawer->add_point(pixel, color);
+                        }*/
                         auto pixel = Pixel(j, t0.get_y(), z, i);
                         _drawer->add_point(pixel, color);
                     }
-                    //auto pixel = Pixel(j, t0.get_y(), z, i);
-                    //_drawer->add_point(pixel, color);
-                }
                 z += dz1;
                 i += di1;
                 cur += dcur;
             }
             dcur = Point(orig_dx2, orig_dy2, orig_dz2);
             for (int j = t1.get_x(); j <= t2.get_x(); j++) {
-                if (t0.get_y() >= _z_buf.size() || t0.get_y() < 0 || j < 0 || j >= _z_buf[0].size())
-                    continue;
-                if (_z_buf[t0.get_y()][j] > z) {
-                    _z_buf[t0.get_y()][j] = z;
-                    auto m_point = Matrix(cur);
-                    Matrix to_light_coords = _to_light * m_point;
-                    //int sx = to_light_coords[0][0] + width;
-                    //int sy = to_light_coords[1][0] + height;
-                    int sx = to_light_coords[0][0];
-                    int sy = to_light_coords[1][0];
-                    double sz = to_light_coords[2][0];
-                    if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
-                        std::cout << sx << " " << sy << " " << sz << std::endl;
-                    if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
-                    {
-                        auto pixel = Pixel(j, t0.get_y(), z, 0.1);
-                        _drawer->add_point(pixel, color);
-                    }
-                    else
-                    {
+                if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
+                    if (_z_buf[t0.get_y()][j] > z) {
+                        _z_buf[t0.get_y()][j] = z;
+                        /*auto l_proj = _light->get_projection(cur);
+                        int sx = l_proj.get_x() + width;
+                        int sy = l_proj.get_y() + height;
+                        double sz = l_proj.get_z();
+                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
+                            std::cout << sx << " " << sy << " " << sz << std::endl;
+                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
+                        {
+                            //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
+                            auto pixel = Pixel(j, t0.get_y(), z, Ia * ka);
+                            _drawer->add_point(pixel, color);
+                        }
+                        else
+                        {
+                            auto pixel = Pixel(j, t0.get_y(), z, i);
+                            _drawer->add_point(pixel, color);
+                        }*/
                         auto pixel = Pixel(j, t0.get_y(), z, i);
                         _drawer->add_point(pixel, color);
                     }
-                    //auto pixel = Pixel(j, t0.get_y(), z, i);
-                    //_drawer->add_point(pixel, color);
-                }
                 z += dz2;
                 i += di2;
                 cur += dcur;
@@ -319,32 +321,29 @@ private:
                 double di_x = (i_0_2 - i_0_1) / (p_0_2.get_x() - p_0_1.get_x() + 1);
                 Point orig_dp_x = (orig_p_0_2 - orig_p_0_1) / (p_0_2.get_x() - p_0_1.get_x() + 1);
                 for (int j = p_0_1.get_x(); j <= p_0_2.get_x(); j++) {
-                    if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
-                        continue;
-                    if (_z_buf[y][j] > z_cur) {
-                        _z_buf[y][j] = z_cur;
-                        auto m_point = Matrix(orig_p_0_1);
-                        Matrix to_light_coords = _to_light * m_point;
-                        //int sx = to_light_coords[0][0] + width;
-                        //int sy = to_light_coords[1][0] + height;
-                        int sx = to_light_coords[0][0];
-                        int sy = to_light_coords[1][0];
-                        double sz = to_light_coords[2][0];
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
-                            std::cout << sx << " " << sy << " " << sz << std::endl;
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
-                        {
-                            auto pixel = Pixel(j, y, 0, 0.1);
-                            _drawer->add_point(pixel, color);
-                        }
-                        else
-                        {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (_z_buf[y][j] > z_cur) {
+                            _z_buf[y][j] = z_cur;
+                            /*auto l_proj = _light->get_projection(orig_p_0_1);
+                            int sx = l_proj.get_x() + width;
+                            int sy = l_proj.get_y() + height;
+                            double sz = l_proj.get_z();
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
+                                std::cout << sx << " " << sy << " " << sz << std::endl;
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
+                            {
+                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
+                                auto pixel = Pixel(j, y, 0, Ia * ka);
+                                _drawer->add_point(pixel, color);
+                            }
+                            else
+                            {
+                                auto pixel = Pixel(j, y, 0, i_cur);
+                                _drawer->add_point(pixel, color);
+                            }*/
                             auto pixel = Pixel(j, y, 0, i_cur);
                             _drawer->add_point(pixel, color);
                         }
-                        //auto pixel = Pixel(j, y, 0, i_cur);
-                        //_drawer->add_point(pixel, color);
-                    }
                     z_cur += dz_x;
                     i_cur += di_x;
                     orig_p_0_1 += orig_dp_x;
@@ -358,32 +357,29 @@ private:
                 Point orig_dp_x = (orig_p_0_1 - orig_p_0_2) / (p_0_1.get_x() - p_0_2.get_x() + 1);
                 double di_x = (i_0_1 - i_0_2) / (p_0_1.get_x() - p_0_2.get_x() + 1);
                 for (int j = p_0_2.get_x(); j <= p_0_1.get_x(); j++) {
-                    if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
-                        continue;
-                    if (_z_buf[y][j] > z_cur) {
-                        _z_buf[y][j] = z_cur;
-                        auto m_point = Matrix(orig_p_0_2);
-                        Matrix to_light_coords = _to_light * m_point;
-                        //int sx = to_light_coords[0][0] + width;
-                        //int sy = to_light_coords[1][0] + height;
-                        int sx = to_light_coords[0][0];
-                        int sy = to_light_coords[1][0];
-                        double sz = to_light_coords[2][0];
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
-                            std::cout << sx << " " << sy << " " << sz << std::endl;
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
-                        {
-                            auto pixel = Pixel(j, y, 0, 0.1);
-                            _drawer->add_point(pixel, color);
-                        }
-                        else
-                        {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (_z_buf[y][j] > z_cur) {
+                            _z_buf[y][j] = z_cur;
+                            /*auto l_proj = _light->get_projection(orig_p_0_2);
+                            int sx = l_proj.get_x() + width;
+                            int sy = l_proj.get_y() + height;
+                            double sz = l_proj.get_z();
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
+                                std::cout << sx << " " << sy << " " << sz << std::endl;
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
+                            {
+                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
+                                auto pixel = Pixel(j, y, 0, Ia * ka);
+                                _drawer->add_point(pixel, color);
+                            }
+                            else
+                            {
+                                auto pixel = Pixel(j, y, 0, i_cur);
+                                _drawer->add_point(pixel, color);
+                            }*/
                             auto pixel = Pixel(j, y, 0, i_cur);
                             _drawer->add_point(pixel, color);
                         }
-                        //auto pixel = Pixel(j, y, 0, i_cur);
-                        //_drawer->add_point(pixel, color);
-                    }
                     z_cur += dz_x;
                     i_cur += di_x;
                     orig_p_0_2 += orig_dp_x;
@@ -418,32 +414,29 @@ private:
                 double di_x = (i_0_2 - i_1_2) / (p_0_2.get_x() - p_1_2.get_x() + 1);
                 Point orig_dp_x = (orig_p_0_2 - orig_p_1_2) / (p_0_2.get_x() - p_1_2.get_x() + 1);
                 for (int j = p_1_2.get_x(); j <= p_0_2.get_x(); j++) {
-                    if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
-                        continue;
-                    if (_z_buf[y][j] >= z_cur) {
-                        _z_buf[y][j] = z_cur;
-                        auto m_point = Matrix(orig_p_1_2);
-                        Matrix to_light_coords = _to_light * m_point;
-                        //int sx = to_light_coords[0][0] + width;
-                        //int sy = to_light_coords[1][0] + height;
-                        int sx = to_light_coords[0][0];
-                        int sy = to_light_coords[1][0];
-                        double sz = to_light_coords[2][0];
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
-                            std::cout << sx << " " << sy << " " << sz << std::endl;
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
-                        {
-                            auto pixel = Pixel(j, y, 0, 0.1);
-                            _drawer->add_point(pixel, color);
-                        }
-                        else
-                        {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (_z_buf[y][j] >= z_cur) {
+                            _z_buf[y][j] = z_cur;
+                            /*auto l_proj = _light->get_projection(orig_p_1_2);
+                            int sx = l_proj.get_x() + width;
+                            int sy = l_proj.get_y() + height;
+                            double sz = l_proj.get_z();
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
+                                std::cout << sx << " " << sy << " " << sz << std::endl;
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
+                            {
+                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
+                                auto pixel = Pixel(j, y, 0, Ia * ka);
+                                _drawer->add_point(pixel, color);
+                            }
+                            else
+                            {
+                                auto pixel = Pixel(j, y, 0, i_cur);
+                                _drawer->add_point(pixel, color);
+                            }*/
                             auto pixel = Pixel(j, y, 0, i_cur);
                             _drawer->add_point(pixel, color);
                         }
-                        //auto pixel = Pixel(j, y, 0, i_cur);
-                        //_drawer->add_point(pixel, color);
-                    }
                     z_cur += dz_x;
                     i_cur += di_x;
                     orig_p_1_2 += orig_dp_x;
@@ -457,32 +450,29 @@ private:
                 double di_x = (i_1_2 - i_0_2) / (p_1_2.get_x() - p_0_2.get_x() + 1);
                 Point orig_dp_x = (orig_p_1_2 - orig_p_0_2) / (p_1_2.get_x() - p_0_2.get_x() + 1);
                 for (int j = p_0_2.get_x(); j <= p_1_2.get_x(); j++) {
-                    if (y >= _z_buf.size() || y < 0 || j < 0 || j >= _z_buf[0].size())
-                        continue;
-                    if (_z_buf[y][j] >= z_cur) {
-                        _z_buf[y][j] = z_cur;
-                        auto m_point = Matrix(orig_p_0_2);
-                        Matrix to_light_coords = _to_light * m_point;
-                        //int sx = to_light_coords[0][0] + width;
-                        //int sy = to_light_coords[1][0] + height;
-                        int sx = to_light_coords[0][0];
-                        int sy = to_light_coords[1][0];
-                        double sz = to_light_coords[2][0];
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
-                            std::cout << sx << " " << sy << " " << sz << std::endl;
-                        if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
-                        {
-                            auto pixel = Pixel(j, y, 0, 0.1);
-                            _drawer->add_point(pixel, color);
-                        }
-                        else
-                        {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (_z_buf[y][j] >= z_cur) {
+                            _z_buf[y][j] = z_cur;
+                            /*auto l_proj = _light->get_projection(orig_p_0_2);
+                            int sx = l_proj.get_x() + width;
+                            int sy = l_proj.get_y() + height;
+                            double sz = l_proj.get_z();
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size())
+                                std::cout << sx << " " << sy << " " << sz << std::endl;
+                            if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] < sz)
+                            {
+                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
+                                auto pixel = Pixel(j, y, 0, Ia * ka);
+                                _drawer->add_point(pixel, color);
+                            }
+                            else
+                            {
+                                auto pixel = Pixel(j, y, 0, i_cur);
+                                _drawer->add_point(pixel, color);
+                            }*/
                             auto pixel = Pixel(j, y, 0, i_cur);
                             _drawer->add_point(pixel, color);
                         }
-                        //auto pixel = Pixel(j, y, 0, i_cur);
-                        //_drawer->add_point(pixel, color);
-                    }
                     z_cur += dz_x;
                     i_cur += di_x;
                     orig_p_0_2 += orig_dp_x;

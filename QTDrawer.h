@@ -73,18 +73,18 @@ public:
         color.setHslF(h, s, point.get_intensity(), a);
         _image->setPixelColor(QPoint(point.get_x(), point.get_y()), color);
     }
-    virtual size_t get_height() const override
+    virtual int get_height() const override
     {
         return _scene->height();
     }
-    virtual size_t get_width() const override
+    virtual int get_width() const override
     {
         return _scene->width();
     }
 
 private:
-    size_t _width;
-    size_t _height;
+    int _width;
+    int _height;
     std::shared_ptr<QGraphicsScene> _scene;
     std::shared_ptr<QImage> _image;
     std::vector<std::pair<QLineF, QColor>> _lines;

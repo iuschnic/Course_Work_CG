@@ -72,14 +72,14 @@ public:
     void sim_iteration(std::shared_ptr<BaseDrawer> drawer)
     {
         //std::map<std::size_t, std::vector<std::vector<double>>> intensities = _scene->calc_intensities(_light);
-        _adapter->set_drawer(drawer);
-        _adapter->set_camera(_camera);
         _adapter->clear();
         _scene->sim_iteration();
         std::map<std::size_t, std::vector<std::vector<double>>> intensities = calc_intensities(_light, _camera);
         std::vector<std::vector<double>> shade_buf = shade_z_buf(drawer->get_width(), drawer->get_height());
-        _adapter->set_to_light(_light->get_look_at());
-        _adapter->set_shade_buf(shade_buf);
+        _adapter->set_drawer(drawer);
+        _adapter->set_camera(_camera);
+        _adapter->set_light(_light);
+        //_adapter->set_shade_buf(shade_buf);
         draw(intensities);
         //draw();
     }
@@ -88,11 +88,11 @@ public:
     {
         //std::cout << "in draw_scene method\n";
         std::map<std::size_t, std::vector<std::vector<double>>> intensities = calc_intensities(_light, _camera);
-        std::vector<std::vector<double>> shade_buf = shade_z_buf(drawer->get_width(), drawer->get_height());
-        _adapter->set_shade_buf(shade_buf);
+        //std::vector<std::vector<double>> shade_buf = shade_z_buf(drawer->get_width(), drawer->get_height());
+        //_adapter->set_shade_buf(shade_buf);
         _adapter->set_drawer(drawer);
         _adapter->set_camera(_camera);
-        _adapter->set_to_light(_light->get_look_at());
+        _adapter->set_light(_light);
         draw(intensities);
         //draw();
     }
@@ -169,18 +169,18 @@ private:
                         Point t0 = _light->get_projection(points[face[0]]);
                         Point t1 = _light->get_projection(points[face[1]]);
                         Point t2 = _light->get_projection(points[face[2]]);
-                        triangle(shade_buf, t0, t1, t2, width, height);
+                        shade_triangle(shade_buf, t0, t1, t2, width, height);
                     }
                     else if (face.size() == 4)
                     {
                         Point t0 = _light->get_projection(points[face[1]]);
                         Point t1 = _light->get_projection(points[face[2]]);
                         Point t2 = _light->get_projection(points[face[3]]);
-                        triangle(shade_buf, t0, t1, t2, width, height);
+                        shade_triangle(shade_buf, t0, t1, t2, width, height);
                         t0 = _light->get_projection(points[face[0]]);
                         t1 = _light->get_projection(points[face[1]]);
                         t2 = _light->get_projection(points[face[3]]);
-                        triangle(shade_buf, t0, t1, t2, width, height);
+                        shade_triangle(shade_buf, t0, t1, t2, width, height);
                     }
 
                 }
@@ -189,10 +189,21 @@ private:
         return shade_buf;
     }
 
-    void triangle(std::vector<std::vector<double>> &shade_buf, Point &p0, Point &p1, Point &p2, size_t &width, size_t &height) {
-        Pixel t0 = Pixel(p0);
-        Pixel t1 = Pixel(p1);
-        Pixel t2 = Pixel(p2);
+    /*void shade_triangle(std::vector<std::vector<double>> &shade_buf, Point &p0, Point &p1, Point &p2, size_t &w, size_t &h)
+    {
+        //std::cout << "size1 " << _shade_buf.size() << " " << _shade_buf[0].size() << std::endl;
+        int size_y = (int) shade_buf.size();
+        int size_x = (int) (shade_buf[0]).size();
+        //std::cout << "size " << size_x << " " << size_y << std::endl;
+        Point pp0 = _light->get_projection(p0);
+        Point pp1 = _light->get_projection(p1);
+        Point pp2 = _light->get_projection(p2);
+        Pixel t0 = Pixel(pp0);
+        Pixel t1 = Pixel(pp1);
+        Pixel t2 = Pixel(pp2);
+        //std::cout << "WH " << width << " " << height << std::endl;
+        int height = (int) h / 2;
+        int width = (int) w / 2;
         t0.set_x(t0.get_x() + width / 2);
         t0.set_y(t0.get_y() + height / 2);
         t1.set_x(t1.get_x() + width / 2);
@@ -201,40 +212,206 @@ private:
         t2.set_y(t2.get_y() + height / 2);
         if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
         {
-            if (t0.get_x() > t1.get_x()) std::swap(t0, t1);
-            if (t0.get_x() > t2.get_x()) std::swap(t0, t2);
-            if (t1.get_x() > t2.get_x()) std::swap(t1, t2);
+            if (t0.get_x() > t1.get_x())
+            {
+                std::swap(t0, t1);
+            }
+            if (t0.get_x() > t2.get_x())
+            {
+                std::swap(t0, t2);
+            }
+            if (t1.get_x() > t2.get_x())
+            {
+                std::swap(t1, t2);
+            }
             double dz1 = (t1.get_z() - t0.get_z()) / (t1.get_x() - t0.get_x() + 1);
             double dz2 = (t2.get_z() - t1.get_z()) / (t2.get_x() - t1.get_x() + 1);
             double z = t0.get_z();
             for (int j = t0.get_x(); j <= t1.get_x(); j++) {
-                if (t0.get_y() >= shade_buf.size() || t0.get_y() < 0 || j < 0 || j >= shade_buf[0].size())
-                    continue;
-                if (shade_buf[t0.get_y()][j] > z) {
-                    shade_buf[t0.get_y()][j] = z;
-                }
+                if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
+                    if (shade_buf[t0.get_y()][j] > z) {
+                        shade_buf[t0.get_y()][j] = z;
+                    }
                 z += dz1;
             }
             for (int j = t1.get_x(); j <= t2.get_x(); j++) {
-                if (t0.get_y() >= shade_buf.size() || t0.get_y() < 0 || j < 0 || j >= shade_buf[0].size())
-                    continue;
-                if (shade_buf[t0.get_y()][j] > z) {
-                    shade_buf[t0.get_y()][j] = z;
-                }
+                if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
+                    if (shade_buf[t0.get_y()][j] > z) {
+                        shade_buf[t0.get_y()][j] = z;
+                    }
                 z += dz2;
             }
             return;
         }
-        if (t0.get_y() > t1.get_y()) std::swap(t0, t1);
-        if (t0.get_y() > t2.get_y()) std::swap(t0, t2);
-        if (t1.get_y() > t2.get_y()) std::swap(t1, t2);
+        if (t0.get_y() > t1.get_y())
+        {
+            std::swap(t0, t1);
+        }
+        if (t0.get_y() > t2.get_y())
+        {
+            std::swap(t0, t2);
+        }
+        if (t1.get_y() > t2.get_y())
+        {
+            std::swap(t1, t2);
+        }
 
         //Расчет инкрементов глубины и интенсивности при движении по оси y, двигаемся снизу вверх, от t0 к t1
         double dz_y_0_1 = (t1.get_z() - t0.get_z()) / (t1.get_y() - t0.get_y() + 1); //Между t0 и t1
         double dz_y_0_2 = (t2.get_z() - t0.get_z()) / (t2.get_y() - t0.get_y() + 1); //Между t0 и t2
+
         double z0 = t0.get_z(); //начальное значение z
         double z_0_1 = z0; //значение z на отрезке 0-1
         double z_0_2 = z0; //значение z на отрезке 0-2
+        int total_height = t2.get_y() - t0.get_y();
+        int segment_height = t1.get_y() - t0.get_y() + 1;
+        //std::cout << "a " << t0.get_y() << " b " << t1.get_y() << std::endl;
+
+        for (int y = t0.get_y(); y <= t1.get_y(); y++) {
+            double alpha = (double)(y - t0.get_y()) / total_height;
+            double beta  = (double)(y - t0.get_y()) / segment_height; // be careful with divisions by zero
+            Pixel p_0_2 = t0 + (t2 - t0) * alpha; //Точка на отрезке 0-2
+            Pixel p_0_1 = t0 + (t1 - t0) * beta; //Точка на отрезке 0-1
+            if (p_0_2.get_x() > p_0_1.get_x())
+            {
+                double z_cur = z_0_1;
+                double dz_x = (z_0_2 - z_0_1) / (p_0_2.get_x() - p_0_1.get_x() + 1);
+                for (int j = p_0_1.get_x(); j <= p_0_2.get_x(); j++) {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] > z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
+                    z_cur += dz_x;
+                }
+            }
+            else
+            {
+                double z_cur = z_0_2;
+                double dz_x = (z_0_1 - z_0_2) / (p_0_1.get_x() - p_0_2.get_x() + 1);
+                for (int j = p_0_2.get_x(); j <= p_0_1.get_x(); j++) {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] > z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
+                    z_cur += dz_x;
+                }
+            }
+            z_0_1 += dz_y_0_1;
+            z_0_2 += dz_y_0_2;
+        }
+
+        double z_1_2 = t1.get_z(); //начальное значение z на отрезке 1-2
+        double dz_y_1_2 = (t2.get_z() - t1.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t1 и t1
+        //z_0_2 остается тем же
+        segment_height = t2.get_y() - t1.get_y() + 1;
+        for (int y = t1.get_y(); y <= t2.get_y(); y++) {
+            double alpha = (double)(y - t0.get_y()) / total_height;
+            double beta  = (double)(y - t1.get_y()) / segment_height;
+            Pixel p_0_2 = t0 + (t2 - t0) * alpha; //Точка на отрезке 2-0
+            Pixel p_1_2 = t1 + (t2 - t1) * beta; //Точка на отрезке 2-1
+            if (p_0_2.get_x() > p_1_2.get_x())
+            {
+                double z_cur = z_1_2;
+                double dz_x = (z_0_2 - z_1_2) / (p_0_2.get_x() - p_1_2.get_x() + 1);
+                for (int j = p_1_2.get_x(); j <= p_0_2.get_x(); j++) {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] >= z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
+                    z_cur += dz_x;
+                }
+            }
+            else
+            {
+                double z_cur = z_0_2;
+                double dz_x = (z_1_2 - z_0_2) / (p_1_2.get_x() - p_0_2.get_x() + 1);
+                for (int j = p_0_2.get_x(); j <= p_1_2.get_x(); j++) {
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] >= z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
+                    z_cur += dz_x;
+                }
+            }
+            z_1_2 += dz_y_1_2;
+            z_0_2 += dz_y_0_2;
+        }
+    }*/
+
+    void shade_triangle(std::vector<std::vector<double>> &shade_buf, Point p0, Point p1, Point p2, size_t w, size_t h)
+    {
+        int size_y = (int) shade_buf.size();
+        int size_x = (int) (shade_buf[0]).size();
+        Pixel t0 = Pixel(p0);
+        Pixel t1 = Pixel(p1);
+        Pixel t2 = Pixel(p2);
+        int height = h / 2;
+        int width = w / 2;
+        t0.set_x(t0.get_x() + width);
+        t0.set_y(t0.get_y() + height);
+        t1.set_x(t1.get_x() + width);
+        t1.set_y(t1.get_y() + height);
+        t2.set_x(t2.get_x() + width);
+        t2.set_y(t2.get_y() + height);
+        if (t0.get_y() == t1.get_y() && t0.get_y() == t2.get_y())
+        {
+            if (t0.get_x() > t1.get_x())
+            {
+                std::swap(t0, t1);
+            }
+            if (t0.get_x() > t2.get_x())
+            {
+                std::swap(t0, t2);
+            }
+            if (t1.get_x() > t2.get_x())
+            {
+                std::swap(t1, t2);
+            }
+            double dz1 = (t1.get_z() - t0.get_z()) / (t1.get_x() - t0.get_x() + 1);
+            double dz2 = (t2.get_z() - t1.get_z()) / (t2.get_x() - t1.get_x() + 1);
+            double z = t0.get_z();
+            for (int j = t0.get_x(); j <= t1.get_x(); j++) {
+                if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
+                    if (shade_buf[t0.get_y()][j] > z) {
+                        shade_buf[t0.get_y()][j] = z;
+                        std::cout << "BEBRA\n";
+                    }
+                z += dz1;
+            }
+            for (int j = t1.get_x(); j <= t2.get_x(); j++) {
+                if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
+                    if (shade_buf[t0.get_y()][j] > z) {
+                        shade_buf[t0.get_y()][j] = z;
+                        std::cout << "BEBRA\n";
+                    }
+                z += dz2;
+            }
+            return;
+        }
+        if (t0.get_y() > t1.get_y())
+        {
+            std::swap(t0, t1);
+        }
+        if (t0.get_y() > t2.get_y())
+        {
+            std::swap(t0, t2);
+        }
+        if (t1.get_y() > t2.get_y())
+        {
+            std::swap(t1, t2);
+        }
+
+        //Расчет инкрементов глубины и интенсивности при движении по оси y, двигаемся снизу вверх, от t0 к t1
+        double dz_y_0_1 = (t1.get_z() - t0.get_z()) / (t1.get_y() - t0.get_y() + 1); //Между t0 и t1
+        double dz_y_0_2 = (t2.get_z() - t0.get_z()) / (t2.get_y() - t0.get_y() + 1); //Между t0 и t2
+        //double orig_dz_y_0_1 = (p1.get_z() - p0.get_z()) / (t1.get_y() - t0.get_y() + 1); //Между p0 и p1
+        //double prig_dz_y_0_2 = (p2.get_z() - p0.get_z()) / (t2.get_y() - t0.get_y() + 1); //Между t0 и t2
+
+        double z0 = t0.get_z(); //начальное значение z
+        double z_0_1 = z0; //значение z на отрезке 0-1
+        double z_0_2 = z0; //значение z на отрезке 0-2
+        //double orig_z_0_1 = orig_z0;
+        //double orig_z_0_2 = orig_z0;
         int total_height = t2.get_y() - t0.get_y();
         int segment_height = t1.get_y() - t0.get_y() + 1;
         for (int y = t0.get_y(); y <= t1.get_y(); y++) {
@@ -249,11 +426,10 @@ private:
                 double z_cur = z_0_1;
                 double dz_x = (z_0_2 - z_0_1) / (p_0_2.get_x() - p_0_1.get_x() + 1);
                 for (int j = p_0_1.get_x(); j <= p_0_2.get_x(); j++) {
-                    if (y >= shade_buf.size() || y < 0 || j < 0 || j >= shade_buf[0].size())
-                        continue;
-                    if (shade_buf[y][j] > z_cur) {
-                        shade_buf[y][j] = z_cur;
-                    }
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] > z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
                     z_cur += dz_x;
                 }
             }
@@ -262,11 +438,10 @@ private:
                 double z_cur = z_0_2;
                 double dz_x = (z_0_1 - z_0_2) / (p_0_1.get_x() - p_0_2.get_x() + 1);
                 for (int j = p_0_2.get_x(); j <= p_0_1.get_x(); j++) {
-                    if (y >= shade_buf.size() || y < 0 || j < 0 || j >= shade_buf[0].size())
-                        continue;
-                    if (shade_buf[y][j] > z_cur) {
-                        shade_buf[y][j] = z_cur;
-                    }
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] > z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
                     z_cur += dz_x;
                 }
             }
@@ -275,7 +450,7 @@ private:
         }
 
         double z_1_2 = t1.get_z(); //начальное значение z на отрезке 1-2
-        double dz_y_1_2 = (t2.get_z() - t1.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t1 и t2
+        double dz_y_1_2 = (t2.get_z() - t1.get_z()) / (t2.get_y() - t1.get_y() + 1); //Между t1 и t1
         //z_0_2 остается тем же
         segment_height = t2.get_y() - t1.get_y() + 1;
         for (int y = t1.get_y(); y <= t2.get_y(); y++) {
@@ -283,18 +458,15 @@ private:
             double beta  = (double)(y - t1.get_y()) / segment_height; // be careful with divisions by zero
             Pixel p_0_2 = t0 + (t2 - t0) * alpha; //Точка на отрезке 2-0
             Pixel p_1_2 = t1 + (t2 - t1) * beta; //Точка на отрезке 2-1
-            //double dz_0_2 = dz_y_0_2;
-            //double dz_0_1 = dz_y_0_1;
             if (p_0_2.get_x() > p_1_2.get_x())
             {
                 double z_cur = z_1_2;
                 double dz_x = (z_0_2 - z_1_2) / (p_0_2.get_x() - p_1_2.get_x() + 1);
                 for (int j = p_1_2.get_x(); j <= p_0_2.get_x(); j++) {
-                    if (y >= shade_buf.size() || y < 0 || j < 0 || j >= shade_buf[0].size())
-                        continue;
-                    if (shade_buf[y][j] >= z_cur) {
-                        shade_buf[y][j] = z_cur;
-                    }
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] >= z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
                     z_cur += dz_x;
                 }
             }
@@ -303,11 +475,10 @@ private:
                 double z_cur = z_0_2;
                 double dz_x = (z_1_2 - z_0_2) / (p_1_2.get_x() - p_0_2.get_x() + 1);
                 for (int j = p_0_2.get_x(); j <= p_1_2.get_x(); j++) {
-                    if (y >= shade_buf.size() || y < 0 || j < 0 || j >= shade_buf[0].size())
-                        continue;
-                    if (shade_buf[y][j] >= z_cur) {
-                        shade_buf[y][j] = z_cur;
-                    }
+                    if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
+                        if (shade_buf[y][j] >= z_cur) {
+                            shade_buf[y][j] = z_cur;
+                        }
                     z_cur += dz_x;
                 }
             }
@@ -315,7 +486,6 @@ private:
             z_0_2 += dz_y_0_2;
         }
     }
-
 
     std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(const std::shared_ptr<PointLight> &light, const std::shared_ptr<PProjCamera> &camera)
     {
@@ -339,9 +509,6 @@ private:
                     //вектор нормали к сфере в данной точке
                     auto n_vec = p - s_center;
                     double n_mod = pow(pow(n_vec.get_x(), 2) + pow(n_vec.get_y(), 2) + pow(n_vec.get_z(), 2), 0.5);
-                    //вектор от точки до источника света
-                    auto l_vec = l_center - p;
-                    double l_mod = pow(pow(l_vec.get_x(), 2) + pow(l_vec.get_y(), 2) + pow(l_vec.get_z(), 2), 0.5);
                     //вектор от точки до камеры
                     auto c_vec = c_center - p;
                     double c_mod = pow(pow(c_vec.get_x(), 2) + pow(c_vec.get_y(), 2) + pow(c_vec.get_z(), 2), 0.5);
@@ -349,13 +516,14 @@ private:
                     auto n_norm = n_vec;
                     n_norm.normalize();
                     //вектор падающего луча
-                    auto f_vec = l_vec * (-1);
+                    auto f_vec = p - l_center;
+                    double f_mod = pow(pow(f_vec.get_x(), 2) + pow(f_vec.get_y(), 2) + pow(f_vec.get_z(), 2), 0.5);
                     //вектор отражения
                     double scalar_f_n = f_vec.get_x() * n_norm.get_x() + f_vec.get_y() * n_norm.get_y() + f_vec.get_z() * n_norm.get_z();
                     auto r_vec = f_vec - n_norm * 2 * scalar_f_n;
                     double r_mod = pow(pow(r_vec.get_x(), 2) + pow(r_vec.get_y(), 2) + pow(r_vec.get_z(), 2), 0.5);
                     //double dist = pow(pow(p.get_x() - l_center.get_x(), 2) + pow(p.get_y() - l_center.get_y(), 2) + pow(p.get_z() - l_center.get_z(), 2), 0.5);
-                    double cos_teta = (n_vec.get_x() * l_vec.get_x() + n_vec.get_y() * l_vec.get_y() + n_vec.get_z() * l_vec.get_z()) / (n_mod * l_mod);
+                    double cos_teta = (n_vec.get_x() * f_vec.get_x() + n_vec.get_y() * f_vec.get_y() + n_vec.get_z() * f_vec.get_z()) / (n_mod * f_mod);
                     double cos_alpha = (r_vec.get_x() * c_vec.get_x() + r_vec.get_y() * c_vec.get_y() + r_vec.get_z() * c_vec.get_z()) / (r_mod * c_mod);
                     if (cos_alpha < 0)
                         cos_alpha = 0;

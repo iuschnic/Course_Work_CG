@@ -5,7 +5,7 @@ Matrix look_at(Point eye, Point center, Point up)
     //Point z = (eye - center).normalize();
     Point z = (center - eye).normalize();
     Point x = (up * z).normalize();
-    Point y = (z * x).normalize();
+    Point y = (x * z).normalize();
     Matrix M = Matrix::identity(4);
     M[0][0] = x.get_x();
     M[1][0] = y.get_x();

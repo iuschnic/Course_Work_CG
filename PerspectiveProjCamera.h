@@ -66,13 +66,12 @@ public:
         p0.set_y(to_cam_coords[1][0]);
         p0.set_z(to_cam_coords[2][0]);
         //std::cout << "after " << p0.get_x() << " " << p0.get_y() << " " << p0.get_z() << std::endl;
-        //return p0;
         Point p;
-        double coef = 1 - (p0.get_z()) / -1000;
+        double coef = 1 - (p0.get_z() - 1000) / -1000;
         //std::cout << "coef " << coef << std::endl;
         p.set_x(p0.get_x() / coef);
         p.set_y(p0.get_y() / coef);
-        p.set_z((p0.get_z()) / coef);
+        p.set_z((p0.get_z() - 1000) / coef);
         //std::cout << "after2 " << p.get_x() << " " << p.get_y() << " " << p.get_z() << std::endl;
         return p;
     }
