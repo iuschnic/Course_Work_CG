@@ -3,6 +3,7 @@
 
 #include "BaseCamera.h"
 #include "Geom.h"
+#define eps 10e-3
 
 class PProjCamera: public BaseCamera
 {
@@ -50,12 +51,68 @@ public:
     }
     void scale(const double kx, const double ky, const double kz) override {}
 
-    Point& get_center() override {return _center;}
-    Point& get_direction() override {return _direction;}
-    Point& get_up() {return _up;}
+    void move_forward()
+    {
+        Point norm(_direction);
+        norm.normalize();
+        _center.move(norm.get_x(), norm.get_y(), norm.get_z());
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+    void move_backward()
+    {
+        Point norm(_direction);
+        norm *= -1;
+        norm.normalize();
+        _center.move(norm.get_x(), norm.get_y(), norm.get_z());
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+    void move_right()
+    {
+        Point norm = _up * _direction;
+        norm.normalize();
+        _center.move(norm.get_x(), norm.get_y(), norm.get_z());
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+    void move_left()
+    {
+        Point norm = _direction * _up;
+        norm.normalize();
+        _center.move(norm.get_x(), norm.get_y(), norm.get_z());
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+    void move_up()
+    {
+        Point norm = _up;
+        norm.normalize();
+        _center.move(norm.get_x(), norm.get_y(), norm.get_z());
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+    void move_down()
+    {
+        Point norm = _up * -1;
+        norm.normalize();
+        _center.move(norm.get_x(), norm.get_y(), norm.get_z());
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+    void rotate_right()
+    {
+        Point c = Point(0, 0, 0);
+        _direction.rotate(c, 0, 1, 0);
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+    void rotate_left()
+    {
+        Point c = Point(0, 0, 0);
+        _direction.rotate(c, 0, -1, 0);
+        _lookat = look_at(_center, _center + _direction, _up);
+    }
+
+    Point get_center() override {return _center;}
+    Point get_direction() override {return _direction;}
+    Point get_up() {return _up;}
     Matrix get_look_at() {return _lookat;}
 
-    Point get_projection(const Point &point) override
+    /*Point get_projection(const Point &point) override
     {
         Point pp(point);
         //std::cout << "before " << pp.get_x() << " " << pp.get_y() << " " << pp.get_z() << std::endl;
@@ -72,7 +129,29 @@ public:
         p.set_x(p0.get_x() / coef);
         p.set_y(p0.get_y() / coef);
         p.set_z((p0.get_z() - 1000) / coef);
+        //if (p.get_z() < 10)
+        std::cout << "cam " << p.get_z() << std::endl;
+        //if (fabs(p.get_z()) < eps)
+        //    p.set_z(10);
         //std::cout << "after2 " << p.get_x() << " " << p.get_y() << " " << p.get_z() << std::endl;
+        return p;
+    }*/
+    Pixel get_projection(const Point &point) override
+    {
+        Point pp(point);
+        auto m_point = Matrix(pp);
+        Matrix to_cam_coords = _lookat * m_point;
+        Point p0;
+        p0.set_x(to_cam_coords[0][0]);
+        p0.set_y(to_cam_coords[1][0]);
+        p0.set_z(to_cam_coords[2][0]);
+        Pixel p;
+        if (fabs(p0.get_z()) < eps)
+            p0.set_z(1);
+        double coef = 1000 / p0.get_z();
+        p.set_x(std::round(p0.get_x() * coef));
+        p.set_y(std::round(p0.get_y() * coef));
+        p.set_z(p0.get_z());
         return p;
     }
 

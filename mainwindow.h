@@ -5,6 +5,7 @@
 #include <QMessageBox>
 #include <QGraphicsScene>
 #include <QFileDialog>
+#include <QKeyEvent>
 #include "Facade.h"
 #include "DrawerSolution.h"
 #include "Commands.h"
@@ -27,6 +28,7 @@ public:
 protected:
     void setup_scene();
     void update_scene();
+    void keyPressEvent(QKeyEvent *event);
 
 private slots:
     void on_load_scene_btn_clicked();

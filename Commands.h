@@ -4,6 +4,19 @@
 #include "BaseCommand.h"
 #include <iostream>
 
+enum direction
+{
+    m_forward = 0,
+    m_backward = 1,
+    m_right = 2,
+    m_left = 3,
+    m_up = 4,
+    m_down = 5,
+    r_left = 6,
+    r_right = 7,
+    none = 8
+};
+
 //Команды отрисовки и очистки сцены
 class DrawSceneCommand: public BaseCommand
 {
@@ -17,9 +30,7 @@ public:
     }
     virtual void execute() override
     {
-        std::cout << "in draw cmd" << std::endl;
         ((*_scene_manager).*_method)(_drawer);
-        std::cout << "out\n";
     }
 
 private:
@@ -132,6 +143,39 @@ public:
 
 private:
     std::size_t _id_camera;
+    Action _method;
+};
+
+class MoveRotateCameraCommand : public BaseCommand
+{
+    using Action = void(SceneManager::*)();
+
+public:
+    MoveRotateCameraCommand(const direction dir)
+    {
+        if (dir == m_forward)
+            _method = &SceneManager::move_camera_forward;
+        if (dir == m_backward)
+            _method = &SceneManager::move_camera_backward;
+        if (dir == m_left)
+            _method = &SceneManager::move_camera_left;
+        if (dir == m_right)
+            _method = &SceneManager::move_camera_right;
+        if (dir == m_up)
+            _method = &SceneManager::move_camera_up;
+        if (dir == m_down)
+            _method = &SceneManager::move_camera_down;
+        if (dir == r_left)
+            _method = &SceneManager::rotate_camera_left;
+        if (dir == r_right)
+            _method = &SceneManager::rotate_camera_right;
+    }
+    virtual void execute() override
+    {
+        ((*_scene_manager).*_method)();
+    }
+
+private:
     Action _method;
 };
 

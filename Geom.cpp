@@ -2,10 +2,12 @@
 
 Matrix look_at(Point eye, Point center, Point up)
 {
-    //Point z = (eye - center).normalize();
     Point z = (center - eye).normalize();
     Point x = (up * z).normalize();
     Point y = (x * z).normalize();
+    //Point z = (eye - center).normalize();
+    //Point x = (up * z).normalize();
+    //Point y = (z * x).normalize();
     Matrix M = Matrix::identity(4);
     M[0][0] = x.get_x();
     M[1][0] = y.get_x();
@@ -54,4 +56,10 @@ Matrix look_at(Point eye, Point center, Point up)
     return Minv * Tr;*/
     //Matrix ModelView = Minv * Tr;
     //return res;
+}
+
+Matrix perspective(const double &focus)
+{
+    Matrix m = Matrix();
+
 }

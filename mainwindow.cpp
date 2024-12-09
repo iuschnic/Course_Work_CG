@@ -14,8 +14,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto id = std::make_shared<std::size_t>(0);
     //Point location_cam(0, 0, 400);
     //Point direction_cam(0, 0, -1);
-    Point location_cam(400, 0, 0);
-    Point direction_cam(-1, 0, 0);
+    Point location_cam(400, 0, 400);
+    Point direction_cam(-1, 0, -1);
     Point up_cam(0, 1, 0);
     Point location_light(400, 0, 0);
     Point direction_light(-1, 0, 0);
@@ -32,24 +32,6 @@ MainWindow::MainWindow(QWidget *parent)
     _facade->execute(add_light_cmd);
     SetMainLightCommand set_light(*id);
     _facade->execute(set_light);
-
-    /*Matrix m;
-    m[0][0] = 1;
-    m[0][2] = 3;
-    m[0][3] = 4;
-    m[1][0] = 5;
-    m[1][1] = 6;
-    m[1][2] = 7;
-    m[1][3] = 8;
-    m[2][1] = 9;
-    m[2][2] = 11;
-    m[3][0] = 13;
-    m[3][1] = 14;
-    m[3][2] = 15;
-    m[3][3] = 16;
-    std::cout << m;
-    m = m.inverse();
-    std::cout << m;*/
 }
 
 MainWindow::~MainWindow()
@@ -148,5 +130,33 @@ void MainWindow::simulate()
 void MainWindow::on_stop_simulation_clicked()
 {
     _timer->stop();
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    int key = event->key();
+    direction dir = none;
+    if (key == Qt::Key_W)
+        dir = m_forward;
+    else if (key == Qt::Key_S)
+        dir = m_backward;
+    else if (key == Qt::Key_D)
+        dir = m_right;
+    else if (key == Qt::Key_A)
+        dir = m_left;
+    else if (key == Qt::Key_E)
+        dir = r_right;
+    else if (key == Qt::Key_Q)
+        dir = r_left;
+    else if (key == Qt::Key_Z)
+        dir = m_up;
+    else if (key == Qt::Key_X)
+        dir = m_down;
+    if (dir != none)
+    {
+        MoveRotateCameraCommand cmd(dir);
+        _facade->execute(cmd);
+        update_scene();
+    }
 }
 

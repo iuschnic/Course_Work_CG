@@ -79,24 +79,22 @@ public:
         return _lookat;
     }
 
-    Point get_projection(const Point &point)
+    Pixel get_projection(const Point &point)
     {
         Point pp(point);
-        //std::cout << "before " << pp.get_x() << " " << pp.get_y() << " " << pp.get_z() << std::endl;
         auto m_point = Matrix(pp);
         Matrix to_cam_coords = _lookat * m_point;
         Point p0;
         p0.set_x(to_cam_coords[0][0]);
         p0.set_y(to_cam_coords[1][0]);
         p0.set_z(to_cam_coords[2][0]);
-        //std::cout << "after " << p0.get_x() << " " << p0.get_y() << " " << p0.get_z() << std::endl;
-        Point p;
-        double coef = 1 - (p0.get_z() - 1000) / -1000;
-        //std::cout << "coef " << coef << std::endl;
-        p.set_x(p0.get_x() / coef);
-        p.set_y(p0.get_y() / coef);
-        p.set_z((p0.get_z() - 1000) / coef);
-        //std::cout << "after2 " << p.get_x() << " " << p.get_y() << " " << p.get_z() << std::endl;
+        Pixel p;
+        if (fabs(p0.get_z()) < eps)
+            p0.set_z(1);
+        double coef = 1000 / p0.get_z();
+        p.set_x(std::round(p0.get_x() * coef));
+        p.set_y(std::round(p0.get_y() * coef));
+        p.set_z(p0.get_z());
         return p;
     }
 

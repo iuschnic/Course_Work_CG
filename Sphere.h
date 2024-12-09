@@ -122,15 +122,15 @@ public:
     {
         return _faces;
     }
-    const double get_radius() const
+    double get_radius() const
     {
         return _radius;
     }
-    const double get_mass() const
+    double get_mass() const
     {
         return _mass;
     }
-    const Point get_center() const
+    Point get_center() const
     {
         return _center;
     }
