@@ -182,26 +182,22 @@ private:
 //Команды добавления/удаления света
 class AddLightCommand : public BaseCommand
 {
-    using Action = std::size_t(SceneManager::*)(const Point &center, const Point &direction, const Point &up);
+    using Action = std::size_t(SceneManager::*)(const Point &center);
 
 public:
-    AddLightCommand(const Point &center, const Point &direction, const Point &up, std::shared_ptr<std::size_t> &id)
+    AddLightCommand(const Point &center, std::shared_ptr<std::size_t> &id)
     {
         _id = id;
         _center = center;
-        _direction = direction;
-        _up = up;
         _method = &SceneManager::add_light;
     }
     virtual void execute() override
     {
-        (*_id) = ((*_scene_manager).*_method)(_center, _direction, _up);
+        (*_id) = ((*_scene_manager).*_method)(_center);
     }
 
 private:
     Point _center;
-    Point _direction;
-    Point _up;
     std::shared_ptr<std::size_t> _id;
     Action _method;
 };

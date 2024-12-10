@@ -49,9 +49,9 @@ public:
     {
         return _scene->add_camera(center, direction, up);
     }
-    std::size_t add_light(const Point &center, const Point &direction, const Point &up)
+    std::size_t add_light(const Point &center)
     {
-        return _scene->add_light(center, direction, up);
+        return _scene->add_light(center);
     }
     void delete_object(const std::size_t &id_object)
     {

@@ -4,33 +4,6 @@
 #include <QGraphicsScene>
 #include "BaseDrawer.h"
 
-/*class QtDrawer: public BaseDrawer
-{
-public:
-    QtDrawer() = delete;
-    explicit QtDrawer(QGraphicsScene *&scene): _scene(scene) {}
-    QtDrawer(const QtDrawer &drawer): _scene(drawer._scene) {}
-
-    // Класс точки использован для удобства, сама проекция точки на камеру будет искаться до момента отрисовки
-    void draw_line(const Point &p1, const Point &p2) override
-    {
-        _scene->addLine(p1.get_x(), p1.get_y(), p2.get_x(), p2.get_y());
-    }
-
-    void draw_pixel(const Point &p1, QColor &color)
-    {
-        _scene->addEllipse(p1.get_x(), p1.get_y(), 1, 0, QPen(color));
-    }
-
-    void clear_scene() override
-    {
-        _scene->clear();
-    }
-
-private:
-    QGraphicsScene *_scene;
-};*/
-
 class QtDrawer : public BaseDrawer
 {
 public:
@@ -53,8 +26,6 @@ public:
     {
         QPixmap item(QPixmap::fromImage(*_image));
         _scene->addPixmap(item);
-        /*for (const auto &line : m_lines)
-            m_scene->addLine(line.first, QPen(line.second));*/
     }
     virtual void add_line(const Point &point1, const Point &point2, const QColor &color) override
     {
@@ -66,8 +37,6 @@ public:
             return;
         if (point.get_y() < 0 || point.get_y() >= _height)
             return;
-        //color.setAlphaF(point.get_intensity());
-        //color.lighter(100 * point.get_intensity());
         float h, s, l, a;
         color.getHslF(&h, &s, &l, &a);
         color.setHslF(h, s, point.get_intensity(), a);

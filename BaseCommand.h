@@ -11,7 +11,6 @@ public:
     BaseCommand() = default;
     virtual ~BaseCommand() = default;
 
-    //Проверить, нужны ли &
     virtual void set_managers(std::shared_ptr<SceneManager> &scene_manager,
                               std::shared_ptr<FileLoadManager> &load_manager)
     {

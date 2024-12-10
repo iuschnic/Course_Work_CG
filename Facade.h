@@ -16,8 +16,6 @@ public:
     void execute(BaseCommand &command)
     {
         command.set_managers(_scene_manager, _load_manager);
-        //auto cam = _scene_manager->get_main_camera();
-        //_scene_manager->set_main_camera(cam);
         command.execute();
     }
 

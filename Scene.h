@@ -33,9 +33,9 @@ public:
         _invisible_objects.insert({cam->get_id(), cam});
         return cam->get_id();
     }
-    std::size_t add_light(const Point &center, const Point &direction, const Point &up)
+    std::size_t add_light(const Point &center)
     {
-        auto light = std::make_shared<PointLight>(PointLight(center, direction, up));
+        auto light = std::make_shared<PointLight>(PointLight(center));
         _invisible_objects.insert({light->get_id(), light});
         return light->get_id();
     }
@@ -117,75 +117,6 @@ public:
         }
         return accelerations;
     }
-
-    //Функция подсчета скорости, полученной засчет ускорения за малое время time
-    /*std::map<std::size_t, Point> calc_speeds(const double time, const std::map<std::size_t, Point> &accelerations) const
-    {
-        std::map<std::size_t, Point> speeds;
-        for (const auto &[id_fir, pnt_fir]: accelerations)
-        {
-            Point speed(pnt_fir);
-            speed *= time;
-            speeds[id_fir] = speed;
-        }
-        return speeds;
-    }*/
-
-    /*std::map<std::size_t, std::vector<std::vector<double>>> calc_intensities(const std::shared_ptr<PointLight> &light, const std::shared_ptr<PProjCamera> &camera)
-    {
-        std::map<std::size_t, std::vector<std::vector<double>>> intensities;
-        auto l_center = light->get_center();
-        auto c_center = camera->get_center();
-        for (const auto &[id, obj]: _visible_objects)
-        {
-            intensities[id] = {};
-            auto object = std::static_pointer_cast<Object>(obj);
-            auto spheres = object->get_spheres();
-            for (int i = 0; i < spheres.size(); i++)
-            {
-                auto s = spheres[i];
-                auto s_center = s->get_center();
-                auto points = s->get_points();
-                std::vector<double> sphere_intensities;
-                for (int i = 0; i < points.size(); i++)
-                {
-                    auto p = points[i];
-                    //вектор нормали к сфере в данной точке
-                    auto n_vec = p - s_center;
-                    double n_mod = pow(pow(n_vec.get_x(), 2) + pow(n_vec.get_y(), 2) + pow(n_vec.get_z(), 2), 0.5);
-                    //вектор от точки до источника света
-                    auto l_vec = l_center - p;
-                    double l_mod = pow(pow(l_vec.get_x(), 2) + pow(l_vec.get_y(), 2) + pow(l_vec.get_z(), 2), 0.5);
-                    //вектор от точки до камеры
-                    auto c_vec = c_center - p;
-                    double c_mod = pow(pow(c_vec.get_x(), 2) + pow(c_vec.get_y(), 2) + pow(c_vec.get_z(), 2), 0.5);
-                    //нормализованный вектор нормали
-                    auto n_norm = n_vec;
-                    n_norm.normalize();
-                    //вектор падающего луча
-                    //auto d_vec = l_vec * (-1);
-                    auto r_vec = l_vec - (l_vec * n_norm) * n_norm * 2;
-                    double r_mod = pow(pow(r_vec.get_x(), 2) + pow(r_vec.get_y(), 2) + pow(r_vec.get_z(), 2), 0.5);
-                    double dist = pow(pow(p.get_x() - l_center.get_x(), 2) + pow(p.get_y() - l_center.get_y(), 2) + pow(p.get_z() - l_center.get_z(), 2), 0.5);
-                    double cos_teta = (n_vec.get_x() * l_vec.get_x() + n_vec.get_y() * l_vec.get_y() + n_vec.get_z() * l_vec.get_z()) / (n_mod * l_mod);
-                    //std::cout << "cos teta " << cos_teta << std::endl;
-                    double cos_alpha = (r_vec.get_x() * n_vec.get_x() + r_vec.get_y() * n_vec.get_y() + r_vec.get_z() * n_vec.get_z()) / (r_mod * n_mod);
-                    //std::cout << "cos alpha " << cos_alpha << std::endl;
-                    //double intensity = Ia * ka + (Il * kd * cos_teta) / (K + dist / 100);
-                    //double intensity = Ia * ka + (Il * kd * cos_teta);
-                    if (cos_alpha < 0)
-                        cos_alpha = 0;
-                    if (cos_teta < 0)
-                        cos_teta = 0;
-                    double intensity = Ia * ka + Il * (kd * cos_teta + ks * pow(cos_alpha, ndeg));
-                    sphere_intensities.push_back(intensity);
-                    //std::cout << "I " << intensity << std::endl;
-                }
-                intensities[id].push_back(sphere_intensities);
-            }
-        }
-        return intensities;
-    }*/
 
     //Метод для обработки столкновений объектов в сцене
     void process_collisions()

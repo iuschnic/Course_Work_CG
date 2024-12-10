@@ -29,19 +29,17 @@ public:
             return objs;
         for (int i = 0; i < n_objs; i++)
         {
-            //auto sphere = load_sphere(stream);
-            //std::shared_ptr<Object> obj = std::make_shared<Object>(Object(sphere));
             auto obj = load_obj(stream);
+            if (!obj)
+                return {};
             objs.push_back(obj);
         }
-        //std::cout << "loaded all objs" << std::endl;
         return objs;
     }
 
 private:
     std::shared_ptr<Object> load_obj(std::istream &stream)
     {
-        //std::cout << "loading" << std::endl;
         double x, y, z, vx, vy, vz, mass, radius;
         stream >> x >> y >> z;
         if (!stream)
@@ -59,7 +57,6 @@ private:
         std::shared_ptr<Sphere> sphere = std::make_shared<Sphere>(Sphere(mass, radius, center));
         std::shared_ptr<Object> obj = std::make_shared<Object>(Object(sphere));
         obj->set_speed(speed);
-        //std::cout << "loaded" << std::endl;
         return obj;
     }
 };

@@ -18,9 +18,6 @@ MainWindow::MainWindow(QWidget *parent)
     Point direction_cam(-1, 0, -1);
     Point up_cam(0, 1, 0);
     Point location_light(400, 0, 0);
-    Point direction_light(-1, 0, 0);
-    Point up_light(0, 1, 0);
-    //Point location_light(0, 0, -500);
     _timer = new QTimer(this);
     connect(_timer, SIGNAL(timeout()), this, SLOT(simulate()));
     AddCameraCommand add_cam_cmd (location_cam, direction_cam, up_cam, id);
@@ -28,7 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     SetMainCameraCommand set_cam(*id);
     _facade->execute(set_cam);
 
-    AddLightCommand add_light_cmd(location_light, direction_light, up_light, id);
+    AddLightCommand add_light_cmd(location_light, id);
     _facade->execute(add_light_cmd);
     SetMainLightCommand set_light(*id);
     _facade->execute(set_light);
@@ -79,11 +76,15 @@ void MainWindow::on_load_scene_btn_clicked()
     {
         FileLoadModelCommand load_cmd(objs, file_name);
         _facade->execute(load_cmd);
+        if (objs.empty())
+        {
+            std::string msg = "You need to add some models first";
+            throw LoadException(msg);
+        }
         for (auto &obj: objs)
         {
             AddObjectCommand add_cmd(obj, id);
             _facade->execute(add_cmd);
-            //_models.push_back(*id);
         }
     }
     catch (const BaseException &err)

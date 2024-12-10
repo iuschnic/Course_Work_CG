@@ -16,26 +16,6 @@ protected:
     std::string _msg;
 };
 
-class CameraException : public BaseException
-{
-public:
-    explicit CameraException(std::string &msg) : BaseException(msg) {}
-    const char *what() const noexcept override
-    {
-        return "You need to add camera first";
-    }
-};
-
-class ModelException : public BaseException
-{
-public:
-    explicit ModelException(std::string &msg) : BaseException(msg) {}
-    const char *what() const noexcept override
-    {
-        return "You need to add model first";
-    }
-};
-
 class LoadException : public BaseException
 {
 public:

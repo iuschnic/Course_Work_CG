@@ -12,8 +12,6 @@ public:
         _type = "light";
     }
     virtual ~BaseLight() = default;
-    //virtual Point& get_direction() = 0;
-    //virtual Point get_projection(const Point &point) = 0;
 };
 
 #endif // BASELIGHT_H
