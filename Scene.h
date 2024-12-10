@@ -323,7 +323,6 @@ public:
             object->add_speed(speed);
             speed = object->get_speed();
             speed *= TIME;
-            //std::cout << "moving " << speed.get_x() << " " << speed.get_y() << " " << speed.get_z();
             obj->move(speed.get_x(), speed.get_y(), speed.get_z());
         }
     }

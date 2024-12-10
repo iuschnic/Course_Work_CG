@@ -108,18 +108,11 @@ void MainWindow::on_load_scene_btn_clicked()
 
 void MainWindow::on_start_simulation_clicked()
 {
-    //QTimer *timer = new QTimer(this);
-    //connect(timer, SIGNAL(timeout()), this, SLOT(simulate()));
-    _timer->start(1000 / 20);
-
-    /*StartSimulationCommand start_cmd(_drawer);
-    _facade->execute(start_cmd);*/
+    _timer->start(1000 / 25);
 }
 
 void MainWindow::simulate()
 {
-    //StartSimulationCommand start_cmd(_drawer);
-    //_facade->execute(start_cmd);
     clock_t start = clock();
     SimIterationCommand sim(_drawer);
     _facade->execute(sim);

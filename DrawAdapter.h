@@ -101,9 +101,9 @@ public:
         _drawer->clear();
         clear_z_buf();
     }
-    void set_to_light(Matrix m)
+    void set_spheres(std::vector<std::pair<Point, double>> &spheres)
     {
-        _to_light = m;
+        _spheres = spheres;
     }
 private:
     std::shared_ptr<BaseCamera> _camera;
@@ -113,7 +113,7 @@ private:
     std::vector<std::vector<double>> _z_buf;
     std::vector<std::vector<double>> _shade_buf;
     std::vector<std::vector<double>> _intensities;
-    Matrix _to_light;
+    std::vector<std::pair<Point, double>> _spheres;
     Pixel get_projection(const Point &point)
     {
         return _camera->get_projection(point);
@@ -130,6 +130,33 @@ private:
                 _z_buf[i].push_back(std::numeric_limits<double>::max());
             }
         }
+    }
+
+    bool is_shaded(const Point &pnt)
+    {
+        Point l_center = _light->get_center();
+        //вектор из точки к источнику света
+        Point pnt_l = l_center - pnt;
+        for (auto &pair: _spheres)
+        {
+            //вектор из точки в центр сферы, радиус сферы
+            Point pnt_s = pair.first - pnt;
+            double r_s = pair.second;
+            //если эти вектора противонаправлены, то сфера находится за точкой и тени точно на нее не отбрасывает
+            double scalar = pnt_s.get_x() * pnt_l.get_x() + pnt_s.get_y() * pnt_l.get_y() + pnt_s.get_z() * pnt_l.get_z();
+            if (scalar < 0)
+                continue;
+            //ищем расстояние от центра сферы до прямой точка-свет, если оно меньше радиуса, то сфера отбрасывает на точку тень
+            //модуль направляющего вектора прямой точка-свет
+            //векторное произведение направляющего вектора и вектора центр_сферы-точка
+            Point vec_prod = pnt_s * pnt_l * -1;
+            double vec_prod_mod = pow(pow(vec_prod.get_x(), 2) + pow(vec_prod.get_y(), 2) + pow(vec_prod.get_z(), 2), 0.5);
+            double pnt_l_mod = pow(pow(pnt_l.get_x(), 2) + pow(pnt_l.get_y(), 2) + pow(pnt_l.get_z(), 2), 0.5);
+            double d = vec_prod_mod / pnt_l_mod;
+            if (d < r_s)
+                return true;
+        }
+        return false;
     }
 
     void clear_z_buf()
@@ -205,11 +232,7 @@ private:
                 if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
                     if (_z_buf[t0.get_y()][j] > z) {
                         _z_buf[t0.get_y()][j] = z;
-                        auto l_proj = _light->get_projection(cur);
-                        int sx = l_proj.get_x() + width;
-                        int sy = l_proj.get_y() + height;
-                        double sz = l_proj.get_z();
-                        /*if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] > sz)
+                        if (is_shaded(cur))
                         {
                             //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
                             auto pixel = Pixel(j, t0.get_y(), z, Ia * ka);
@@ -220,9 +243,9 @@ private:
                         {
                             auto pixel = Pixel(j, t0.get_y(), z, i);
                             _drawer->add_point(pixel, color);
-                        }*/
-                        auto pixel = Pixel(j, t0.get_y(), z, i);
-                        _drawer->add_point(pixel, color);
+                        }
+                        //auto pixel = Pixel(j, t0.get_y(), z, i);
+                        //_drawer->add_point(pixel, color);
                     }
                 z += dz1;
                 i += di1;
@@ -233,24 +256,18 @@ private:
                 if ((t0.get_y() > 0) && (j > 0) && (t0.get_y() < size_y) && (j < size_x))
                     if (_z_buf[t0.get_y()][j] > z) {
                         _z_buf[t0.get_y()][j] = z;
-                        auto l_proj = _light->get_projection(cur);
-                        int sx = l_proj.get_x() + width;
-                        int sy = l_proj.get_y() + height;
-                        double sz = l_proj.get_z();
-                        /*if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] > sz)
+                        if (is_shaded(cur))
                         {
-                            //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
                             auto pixel = Pixel(j, t0.get_y(), z, Ia * ka);
-                            //auto pixel = Pixel(j, t0.get_y(), z, i);
                             _drawer->add_point(pixel, color);
                         }
                         else
                         {
                             auto pixel = Pixel(j, t0.get_y(), z, i);
                             _drawer->add_point(pixel, color);
-                        }*/
-                        auto pixel = Pixel(j, t0.get_y(), z, i);
-                        _drawer->add_point(pixel, color);
+                        }
+                        //auto pixel = Pixel(j, t0.get_y(), z, i);
+                        //_drawer->add_point(pixel, color);
                     }
                 z += dz2;
                 i += di2;
@@ -312,24 +329,18 @@ private:
                     if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
                         if (_z_buf[y][j] > z_cur) {
                             _z_buf[y][j] = z_cur;
-                            auto l_proj = _light->get_projection(orig_p_0_1);
-                            int sx = l_proj.get_x() + width;
-                            int sy = l_proj.get_y() + height;
-                            double sz = l_proj.get_z();
-                            /*if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] > sz)
+                            if (is_shaded(orig_p_0_1))
                             {
-                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
                                 auto pixel = Pixel(j, y, 0, Ia * ka);
-                                //auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
                             }
                             else
                             {
                                 auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
-                            }*/
-                            auto pixel = Pixel(j, y, 0, i_cur);
-                            _drawer->add_point(pixel, color);
+                            }
+                            //auto pixel = Pixel(j, y, 0, i_cur);
+                            //_drawer->add_point(pixel, color);
                         }
                     z_cur += dz_x;
                     i_cur += di_x;
@@ -347,24 +358,18 @@ private:
                     if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
                         if (_z_buf[y][j] > z_cur) {
                             _z_buf[y][j] = z_cur;
-                            auto l_proj = _light->get_projection(orig_p_0_2);
-                            int sx = l_proj.get_x() + width;
-                            int sy = l_proj.get_y() + height;
-                            double sz = l_proj.get_z();
-                            /*if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] > sz)
+                            if (is_shaded(orig_p_0_2))
                             {
-                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
                                 auto pixel = Pixel(j, y, 0, Ia * ka);
-                                //auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
                             }
                             else
                             {
                                 auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
-                            }*/
-                            auto pixel = Pixel(j, y, 0, i_cur);
-                            _drawer->add_point(pixel, color);
+                            }
+                            //auto pixel = Pixel(j, y, 0, i_cur);
+                            //_drawer->add_point(pixel, color);
                         }
                     z_cur += dz_x;
                     i_cur += di_x;
@@ -403,24 +408,18 @@ private:
                     if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
                         if (_z_buf[y][j] >= z_cur) {
                             _z_buf[y][j] = z_cur;
-                            auto l_proj = _light->get_projection(orig_p_1_2);
-                            int sx = l_proj.get_x() + width;
-                            int sy = l_proj.get_y() + height;
-                            double sz = l_proj.get_z();
-                            /*if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] > sz)
+                            if (is_shaded(orig_p_1_2))
                             {
-                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
                                 auto pixel = Pixel(j, y, 0, Ia * ka);
-                                //auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
                             }
                             else
                             {
                                 auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
-                            }*/
-                            auto pixel = Pixel(j, y, 0, i_cur);
-                            _drawer->add_point(pixel, color);
+                            }
+                            //auto pixel = Pixel(j, y, 0, i_cur);
+                            //_drawer->add_point(pixel, color);
                         }
                     z_cur += dz_x;
                     i_cur += di_x;
@@ -438,26 +437,18 @@ private:
                     if ((y > 0) && (j > 0) && (y < size_y) && (j < size_x))
                         if (_z_buf[y][j] >= z_cur) {
                             _z_buf[y][j] = z_cur;
-                            auto l_proj = _light->get_projection(orig_p_0_2);
-                            int sx = l_proj.get_x() + width;
-                            int sy = l_proj.get_y() + height;
-                            double sz = l_proj.get_z();
-                            //std::cout << sx << " " << sy << " " << j << " " << y << std::endl;
-                            //std::cout << z_cur << " " << sz << std::endl;
-                            /*if (sy >= _shade_buf.size() || sy < 0 || sx < 0 || sx >= _shade_buf[0].size() || _shade_buf[sy][sx] > sz)
+                            if (is_shaded(orig_p_0_2))
                             {
-                                //std::cout << "zbuf " << _shade_buf[sy][sx] << " cur " << sz << std::endl;
                                 auto pixel = Pixel(j, y, 0, Ia * ka);
-                                //auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
                             }
                             else
                             {
                                 auto pixel = Pixel(j, y, 0, i_cur);
                                 _drawer->add_point(pixel, color);
-                            }*/
-                            auto pixel = Pixel(j, y, 0, i_cur);
-                            _drawer->add_point(pixel, color);
+                            }
+                            //auto pixel = Pixel(j, y, 0, i_cur);
+                            //_drawer->add_point(pixel, color);
                         }
                     z_cur += dz_x;
                     i_cur += di_x;
