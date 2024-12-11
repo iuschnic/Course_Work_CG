@@ -47,6 +47,11 @@ public:
                 double scalar = dir.get_x() * cam_sphere.get_x() + dir.get_y() * cam_sphere.get_y() + dir.get_z() * cam_sphere.get_z();
                 if (scalar < 0)
                     continue;
+                double dir_mod = pow(pow(dir.get_x(), 2) + pow(dir.get_y(), 2) + pow(dir.get_z(), 2), 0.5);
+                double cam_sphere_mod = pow(pow(cam_sphere.get_x(), 2) + pow(cam_sphere.get_y(), 2) + pow(cam_sphere.get_z(), 2), 0.5);
+                double cos_alpha = scalar / (fabs(dir_mod) * fabs(cam_sphere_mod));
+                if (cos_alpha < 0.2)
+                   continue;
                 auto intensities = _intensities[i];
                 if (_adaptee->get_mass() < 0)
                 {

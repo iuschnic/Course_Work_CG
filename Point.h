@@ -27,18 +27,6 @@ public:
         _y = p._y;
         _z = p._z;
     }
-    /*Point(const Pixel &p)
-    {
-        _x = p.get_x();
-        _y = p.get_y();
-        _z = p.get_z();
-    }
-    Point(const Pixel &&p)
-    {
-        _x = p.get_x();
-        _y = p.get_y();
-        _z = p.get_z();
-    }*/
     Point &operator=(const Point &p)
     {
         _x = p._x;
@@ -181,6 +169,52 @@ public:
         _z += dz;
     }
 
+    void rotate(const Point &center, const double &ang_x, const double &ang_y, const double &ang_z)
+    {
+        double x_rad, y_rad, z_rad;
+        x_rad = ang_x * M_PI / 180;
+        y_rad = ang_y * M_PI / 180;
+        z_rad = ang_z * M_PI / 180;
+        this->rotate_x(center, x_rad);
+        this->rotate_y(center, y_rad);
+        this->rotate_z(center, z_rad);
+    }
+
+    void scale(const Point &center, const double &kx, const double &ky, const double &kz)
+    {
+        this->scale_x(center, kx);
+        this->scale_y(center, ky);
+        this->scale_z(center, kz);
+    }
+
+    Point normalize()
+    {
+        double len = pow(pow(_x, 2) + pow(_y, 2) + pow(_z, 2), 0.5);
+        _x /= len;
+        _y /= len;
+        _z /= len;
+        return *this;
+    }
+
+private:
+    double _x;
+    double _y;
+    double _z;
+    void scale_x(const Point &center, const double &kx)
+    {
+        _x = center._x + (_x - center._x) * kx;
+    }
+
+    void scale_y(const Point &center, const double &ky)
+    {
+        _y = center._y + (_y - center._y) * ky;
+    }
+
+    void scale_z(const Point &center,const double &kz)
+    {
+        _z = center._z + (_z - center._z) * kz;
+    }
+
     void rotate_x(const Point &center, const double &angle)
     {
         double y1 = center._y + (_y - center._y) * cos(angle) + (center._z - _z) * sin(angle);
@@ -204,53 +238,6 @@ public:
         _x = x1;
         _y = y1;
     }
-
-    void rotate(const Point &center, const double &ang_x, const double &ang_y, const double &ang_z)
-    {
-        double x_rad, y_rad, z_rad;
-        x_rad = ang_x * M_PI / 180;
-        y_rad = ang_y * M_PI / 180;
-        z_rad = ang_z * M_PI / 180;
-        this->rotate_x(center, x_rad);
-        this->rotate_y(center, y_rad);
-        this->rotate_z(center, z_rad);
-    }
-
-    void scale_x(const Point &center, const double &kx)
-    {
-        _x = center._x + (_x - center._x) * kx;
-    }
-
-    void scale_y(const Point &center, const double &ky)
-    {
-        _y = center._y + (_y - center._y) * ky;
-    }
-
-    void scale_z(const Point &center,const double &kz)
-    {
-        _z = center._z + (_z - center._z) * kz;
-    }
-
-    void scale(const Point &center, const double &kx, const double &ky, const double &kz)
-    {
-        this->scale_x(center, kx);
-        this->scale_y(center, ky);
-        this->scale_z(center, kz);
-    }
-
-    Point normalize()
-    {
-        double len = pow(pow(_x, 2) + pow(_y, 2) + pow(_z, 2), 0.5);
-        _x /= len;
-        _y /= len;
-        _z /= len;
-        return *this;
-    }
-
-private:
-    double _x;
-    double _y;
-    double _z;
 };
 
 class Pixel

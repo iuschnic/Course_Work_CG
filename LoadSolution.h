@@ -125,7 +125,6 @@ public:
                 flag1 = 1;
             }
         }
-        std::cout << objs.size();
         return objs;
     }
 
@@ -154,7 +153,6 @@ private:
 
     double rand_double(double dmin, double dmax)
     {
-        //srand(time(NULL));
         double f = (double) rand() / RAND_MAX;
         return dmin + f * (dmax - dmin);
     }

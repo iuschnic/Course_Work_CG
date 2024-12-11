@@ -9,11 +9,11 @@
 
 class Matrix {
 private:
-    std::vector<std::vector<float>> m;
+    std::vector<std::vector<double>> m;
     int rows, cols;
 public:
-    Matrix(int r = 4, int c = 4) : m(std::vector<std::vector<float> >(r, std::vector<float>(c, 0.f))), rows(r), cols(c) { }
-    Matrix(Point &p) : m(std::vector<std::vector<float> >(4, std::vector<float>(1, 1.f))), rows(4), cols(1) {
+    Matrix(int r = 4, int c = 4) : m(std::vector<std::vector<double> >(r, std::vector<double>(c, 0.f))), rows(r), cols(c) { }
+    Matrix(Point &p) : m(std::vector<std::vector<double> >(4, std::vector<double>(1, 1.f))), rows(4), cols(1) {
         m[0][0] = p.get_x();
         m[1][0] = p.get_y();
         m[2][0] = p.get_z();
@@ -31,7 +31,7 @@ public:
         }
         return E;
     }
-    std::vector<float>& operator[](const int i)
+    std::vector<double>& operator[](const int i)
     {
         assert(i >= 0 && i < rows);
         return m[i];
@@ -66,12 +66,11 @@ public:
                 result[i][j] = m[i][j];
         for(int i = 0; i < rows; i++)
             result[i][i + cols] = 1;
-        // first pass
         for (int i = 0; i < rows - 1; i++) {
             for(int j = result.cols - 1; j >= 0; j--)
                 result[i][j] /= result[i][i];
             for (int k = i + 1; k < rows; k++) {
-                float coeff = result[k][i];
+                double coeff = result[k][i];
                 for (int j = 0; j < result.cols; j++) {
                     result[k][j] -= result[i][j] * coeff;
                 }
@@ -81,7 +80,7 @@ public:
             result[rows - 1][j] /= result[rows - 1][rows - 1];
         for (int i = rows - 1; i > 0; i--) {
             for (int k = i - 1; k >= 0; k--) {
-                float coeff = result[k][i];
+                double coeff = result[k][i];
                 for (int j = 0; j < result.cols; j++) {
                     result[k][j] -= result[i][j] * coeff;
                 }

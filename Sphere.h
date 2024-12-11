@@ -147,7 +147,7 @@ public:
     void scale(const double &kx, const double &ky, const double &kz, const Point &center)
     {
         for (auto &p : _points)
-            p.scale(_center, kx, ky, kz);
+            p.scale(center, kx, ky, kz);
     }
     bool check_intersection(const Sphere &sphere)
     {

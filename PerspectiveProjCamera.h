@@ -3,7 +3,7 @@
 
 #include "BaseCamera.h"
 #include "Geom.h"
-#define eps 10e-3
+#define eps 1
 
 class PProjCamera: public BaseCamera
 {
@@ -38,17 +38,8 @@ public:
     }
     ~PProjCamera() = default;
 
-    void move(const double dx, const double dy, const double dz) override
-    {
-        _center.move(dx, dy, dz);
-        //Point up = Point(1, 0, 0);
-        _lookat = look_at(_center, _direction, _up);
-    }
-    void rotate(const double ang_x, const double ang_y, const double ang_z) override
-    {
-        _direction.rotate(_center, ang_x, ang_y, ang_z);
-        _lookat = look_at(_center, _direction, _up);
-    }
+    void move(const double dx, const double dy, const double dz) override {}
+    void rotate(const double ang_x, const double ang_y, const double ang_z) override {}
     void scale(const double kx, const double ky, const double kz) override {}
 
     void move_forward()
@@ -123,7 +114,7 @@ public:
         p0.set_z(to_cam_coords[2][0]);
         Pixel p;
         if (fabs(p0.get_z()) < eps)
-            p0.set_z(1);
+            return Pixel(1000, 1000, 1000, 0);
         double coef = 500 / p0.get_z();
         p.set_x(std::round(p0.get_x() * coef));
         p.set_y(std::round(p0.get_y() * coef));

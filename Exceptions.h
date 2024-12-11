@@ -36,4 +36,14 @@ public:
     }
 };
 
+class EmptySceneException : public BaseException
+{
+public:
+    explicit EmptySceneException(std::string &msg) : BaseException(msg) {}
+    const char *what() const noexcept override
+    {
+        return "Empty scene";
+    }
+};
+
 #endif // EXCEPTIONS_H

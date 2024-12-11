@@ -19,7 +19,6 @@ public:
 protected:
     std::size_t _id;
     static std::size_t _next_id;
-    //Point _center;
 };
 
 #endif // BASEOBJECT_H

@@ -121,12 +121,11 @@ void MainWindow::on_generate_clicked()
         _facade->execute(load_cmd);
         if (objs.empty())
         {
-            std::string msg = "You need to add some models first";
+            std::string msg = "Загруженная сцена пуста";
             throw GenException(msg);
         }
         ClearSceneCommand clear_cmd;
         _facade->execute(clear_cmd);
-        std::cout << objs.size();
         for (auto &obj: objs)
         {
             AddObjectCommand add_cmd(obj, id);
@@ -152,9 +151,25 @@ void MainWindow::on_start_simulation_clicked()
 
 void MainWindow::simulate()
 {
+    auto rc = std::make_shared<int>(0);
     clock_t start = clock();
-    SimIterationCommand sim(_drawer);
-    _facade->execute(sim);
+
+    try
+    {
+        SimIterationCommand sim(_drawer, rc);
+        _facade->execute(sim);
+        if ((*rc) == -1)
+        {
+            _timer->stop();
+            std::string msg = "Сцена пуста";
+            throw EmptySceneException(msg);
+        }
+    }
+    catch (const BaseException &err)
+    {
+        QMessageBox::critical(nullptr, "Ошибка!", "Для запуска симуляции загрузите сцену!");
+        return;
+    }
     //printf("Time: %.6fs\n", (double) (clock() - start) / CLOCKS_PER_SEC);
 }
 
@@ -223,7 +238,6 @@ void MainWindow::on_MoveLight_clicked()
     buf.str("");
     buf.clear();
     std::string str = buf.str();
-    std::cout << str;
     ui->light->setText(str.c_str());
     update_scene();
 }

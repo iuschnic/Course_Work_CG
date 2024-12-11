@@ -81,22 +81,24 @@ private:
 
 class SimIterationCommand: public BaseCommand
 {
-    using Action = void(SceneManager::*)(std::shared_ptr<BaseDrawer> drawer);
+    using Action = int(SceneManager::*)(std::shared_ptr<BaseDrawer> drawer);
 
 public:
-    SimIterationCommand(std::shared_ptr<BaseDrawer> drawer)
+    SimIterationCommand(std::shared_ptr<BaseDrawer> drawer, std::shared_ptr<int> &rc)
     {
         _method = &SceneManager::sim_iteration;
         _drawer = drawer;
+        _rc = rc;
     }
     virtual void execute() override
     {
-        ((*_scene_manager).*_method)(_drawer);
+        (*_rc) = ((*_scene_manager).*_method)(_drawer);
     }
 
 private:
     Action _method;
     std::shared_ptr<BaseDrawer> _drawer;
+    std::shared_ptr<int> _rc;
 };
 
 //Команды добавления/удаления камер
@@ -307,25 +309,6 @@ private:
 };
 
 //Команды управления основной камерой сцены
-class GetMainCameraCommand : public BaseCommand
-{
-    using Action = std::shared_ptr<PProjCamera> (SceneManager::*)();
-
-public:
-    GetMainCameraCommand(std::shared_ptr<PProjCamera> &camera) : _camera(camera)
-    {
-        _method = &SceneManager::get_main_camera;
-    }
-    virtual void execute() override
-    {
-        _camera = ((*_scene_manager).*_method)();
-    }
-
-private:
-    std::shared_ptr<PProjCamera> &_camera; // Нужна ли & ?
-    Action _method;
-};
-
 class SetMainCameraCommand : public BaseCommand
 {
     using Action = void(SceneManager::*)(const std::size_t id_camera);
@@ -343,25 +326,6 @@ public:
 
 private:
     std::size_t _id_camera;
-    Action _method;
-};
-
-class GetMainLightCommand : public BaseCommand
-{
-    using Action = std::shared_ptr<PointLight> (SceneManager::*)();
-
-public:
-    GetMainLightCommand(std::shared_ptr<PointLight> &light) : _light(light)
-    {
-        _method = &SceneManager::get_main_light;
-    }
-    virtual void execute() override
-    {
-        _light = ((*_scene_manager).*_method)();
-    }
-
-private:
-    std::shared_ptr<PointLight> &_light; // Нужна ли & ?
     Action _method;
 };
 

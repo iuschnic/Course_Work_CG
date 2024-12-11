@@ -27,10 +27,6 @@ public:
         QPixmap item(QPixmap::fromImage(*_image));
         _scene->addPixmap(item);
     }
-    virtual void add_line(const Point &point1, const Point &point2, const QColor &color) override
-    {
-        _lines.emplace_back(QLine(point1.get_x(), point1.get_y(), point2.get_x(), point2.get_y()), color);
-    }
     virtual void add_point(const Pixel &point, QColor &color) override
     {
         if (point.get_x() < 0 || point.get_x() >= _width)
@@ -52,8 +48,8 @@ public:
     }
 
 private:
-    int _width;
-    int _height;
+    //int _width;
+    //int _height;
     std::shared_ptr<QGraphicsScene> _scene;
     std::shared_ptr<QImage> _image;
     std::vector<std::pair<QLineF, QColor>> _lines;

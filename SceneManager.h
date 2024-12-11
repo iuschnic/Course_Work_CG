@@ -111,8 +111,10 @@ public:
         _camera->rotate_right();
     }
 
-    void sim_iteration(std::shared_ptr<BaseDrawer> drawer)
+    int sim_iteration(std::shared_ptr<BaseDrawer> drawer)
     {
+        if (get_spheres().empty())
+            return -1;
         _adapter->clear();
         _scene->sim_iteration();
         std::map<std::size_t, std::vector<std::vector<double>>> intensities = calc_intensities(_light, _camera);
@@ -122,6 +124,7 @@ public:
         _adapter->set_light(_light);
         _adapter->set_spheres(spheres);
         draw(intensities);
+        return 0;
     }
 
     void draw_scene(std::shared_ptr<BaseDrawer> drawer)
@@ -222,7 +225,7 @@ private:
                         cos_alpha = 0;
                     if (cos_teta < 0)
                         cos_teta = 0;
-                    double intensity = Ia * ka + Il * (kd * cos_teta + ks * pow(cos_alpha, ndeg));
+                    double intensity = Ia * ka + Il * (kd * cos_teta + ks * pow(cos_alpha, ndeg)) / (K + c_mod / 10000);
                     sphere_intensities.push_back(intensity);
                 }
                 intensities[id].push_back(sphere_intensities);
