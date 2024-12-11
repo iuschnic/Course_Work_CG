@@ -35,7 +35,7 @@ public:
         _mass += obj->get_mass();
     }
 
-    const std::vector<std::shared_ptr<Sphere>> get_spheres() const
+    std::vector<std::shared_ptr<Sphere>> get_spheres()
     {
         return _spheres;
     }

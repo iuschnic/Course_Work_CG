@@ -39,6 +39,12 @@ private slots:
 
     void on_stop_simulation_clicked();
 
+    void on_MoveLightTo_clicked();
+
+    void on_MoveLight_clicked();
+
+    void on_generate_clicked();
+
 private:
     Ui::MainWindow *ui;
     std::shared_ptr<QGraphicsScene> _scene;

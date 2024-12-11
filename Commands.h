@@ -222,6 +222,48 @@ private:
     Action _method;
 };
 
+class MoveLightToCommand : public BaseCommand
+{
+    using Action = void(SceneManager::*)(const Point &center);
+
+public:
+    MoveLightToCommand(const Point &center)
+    {
+        _method = &SceneManager::move_light_to;
+        _center = center;
+    }
+    virtual void execute() override
+    {
+        ((*_scene_manager).*_method)(_center);
+    }
+
+private:
+    Point _center;
+    Action _method;
+};
+
+class MoveLightCommand : public BaseCommand
+{
+    using Action = void(SceneManager::*)(const double &dx, const double &dy, const double &dz);
+
+public:
+    MoveLightCommand(const double &dx, const double &dy, const double &dz)
+    {
+        _method = &SceneManager::move_light;
+        _dx = dx;
+        _dy = dy;
+        _dz = dz;
+    }
+    virtual void execute() override
+    {
+        ((*_scene_manager).*_method)(_dx, _dy, _dz);
+    }
+
+private:
+    double _dx, _dy, _dz;
+    Action _method;
+};
+
 //Команды добавления/удаления тел
 class AddObjectCommand : public BaseCommand
 {
@@ -344,12 +386,12 @@ private:
 };
 
 //Команда загрузки сцены из файла
-class FileLoadModelCommand : public BaseCommand
+class FileLoadSceneCommand : public BaseCommand
 {
     using Action = std::vector<std::shared_ptr<VisibleObject>>(FileLoadManager::*)(std::string &filename);
 
 public:
-    FileLoadModelCommand(std::vector<std::shared_ptr<VisibleObject>> &objs, std::string &filename) : _objs(objs)
+    FileLoadSceneCommand(std::vector<std::shared_ptr<VisibleObject>> &objs, std::string &filename) : _objs(objs)
     {
         _filename = filename;
         _method = &FileLoadManager::load;
@@ -362,6 +404,39 @@ public:
 
 private:
     std::string _filename;
+    std::vector<std::shared_ptr<VisibleObject>> &_objs; // Нужна ли & ?
+    Action _method;
+};
+
+//Команда генерации сцены
+class GenerateSceneCommand : public BaseCommand
+{
+    using Action = std::vector<std::shared_ptr<VisibleObject>>(FileLoadManager::*)(const int &n_objs, const double &min_r, const double &max_r,
+                                                                                    const double &min_s, const double &max_s);
+
+public:
+    GenerateSceneCommand(std::vector<std::shared_ptr<VisibleObject>> &objs, const int &n_objs, const double &min_r, const double &max_r,
+                         const double &min_s, const double &max_s) : _objs(objs)
+    {
+        _n_objs = n_objs;
+        _min_r = min_r;
+        _max_r = max_r;
+        _min_s = min_s;
+        _max_s = max_s;
+        _method = &FileLoadManager::load;
+    }
+
+    virtual void execute() override
+    {
+        _objs = ((*_load_manager).*_method)(_n_objs, _min_r, _max_r, _min_s, _max_s);
+    }
+
+private:
+    int _n_objs;
+    double _min_r;
+    double _max_r;
+    double _min_s;
+    double _max_s;
     std::vector<std::shared_ptr<VisibleObject>> &_objs; // Нужна ли & ?
     Action _method;
 };

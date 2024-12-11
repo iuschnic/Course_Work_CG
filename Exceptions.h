@@ -22,7 +22,17 @@ public:
     explicit LoadException(std::string &msg) : BaseException(msg) {}
     const char *what() const noexcept override
     {
-        return "Fail while loading model";
+        return "Fail while loading scene";
+    }
+};
+
+class GenException : public BaseException
+{
+public:
+    explicit GenException(std::string &msg) : BaseException(msg) {}
+    const char *what() const noexcept override
+    {
+        return "Fail while generating scene";
     }
 };
 

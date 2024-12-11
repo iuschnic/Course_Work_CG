@@ -124,7 +124,7 @@ public:
         Pixel p;
         if (fabs(p0.get_z()) < eps)
             p0.set_z(1);
-        double coef = 1000 / p0.get_z();
+        double coef = 500 / p0.get_z();
         p.set_x(std::round(p0.get_x() * coef));
         p.set_y(std::round(p0.get_y() * coef));
         p.set_z(p0.get_z());

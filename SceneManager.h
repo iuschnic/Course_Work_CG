@@ -68,6 +68,16 @@ public:
         _scene->delete_light(id_light);
     }
 
+    void move_light_to(const Point &center)
+    {
+        _light->move_to(center);
+    }
+
+    void move_light(const double &dx, const double &dy, const double &dz)
+    {
+        _light->move(dx, dy, dz);
+    }
+
     void move_camera_forward()
     {
         _camera->move_forward();

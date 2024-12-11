@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <qtimer.h>
+#include <string>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,10 +13,8 @@ MainWindow::MainWindow(QWidget *parent)
     _facade = std::make_shared<Facade>(Facade());
 
     auto id = std::make_shared<std::size_t>(0);
-    //Point location_cam(0, 0, 400);
-    //Point direction_cam(0, 0, -1);
-    Point location_cam(400, 0, 400);
-    Point direction_cam(-1, 0, -1);
+    Point location_cam(0, 0, 400);
+    Point direction_cam(0, 0, -1);
     Point up_cam(0, 1, 0);
     Point location_light(400, 0, 0);
     _timer = new QTimer(this);
@@ -61,7 +60,7 @@ void MainWindow::setup_scene()
 
 void MainWindow::on_load_scene_btn_clicked()
 {
-    auto path = QFileDialog::getOpenFileName(nullptr, "Загружаем сцену...", "../OOP_lab_03_final/points_links_cube.txt");
+    auto path = QFileDialog::getOpenFileName(nullptr, "Загружаем сцену...", "scene.txt");
     if (path.isNull())
         return;
 
@@ -74,7 +73,7 @@ void MainWindow::on_load_scene_btn_clicked()
 
     try
     {
-        FileLoadModelCommand load_cmd(objs, file_name);
+        FileLoadSceneCommand load_cmd(objs, file_name);
         _facade->execute(load_cmd);
         if (objs.empty())
         {
@@ -104,6 +103,45 @@ void MainWindow::on_load_scene_btn_clicked()
     //QString figure = QString("Model ") + QString::number(*id);
     //ui->models_combobox->addItem(figure);
     //ui->models_combobox->setCurrentIndex(ui->models_combobox->count() - 1);
+}
+
+void MainWindow::on_generate_clicked()
+{
+    std::vector<std::shared_ptr<VisibleObject>> objs;
+    auto id = std::make_shared<size_t>(0);
+
+    int n_objs = ui->amount->value();
+    double min_r = ui->min_r->value();
+    double max_r = ui->max_r->value();
+    double min_v = ui->min_v->value();
+    double max_v = ui->max_v->value();
+    try
+    {
+        GenerateSceneCommand load_cmd(objs, n_objs, min_r, max_r, min_v, max_v);
+        _facade->execute(load_cmd);
+        if (objs.empty())
+        {
+            std::string msg = "You need to add some models first";
+            throw GenException(msg);
+        }
+        ClearSceneCommand clear_cmd;
+        _facade->execute(clear_cmd);
+        std::cout << objs.size();
+        for (auto &obj: objs)
+        {
+            AddObjectCommand add_cmd(obj, id);
+            _facade->execute(add_cmd);
+        }
+    }
+    catch (const BaseException &err)
+    {
+        QMessageBox::critical(nullptr, "Ошибка!", "Ошибка генерации сцены!");
+        return;
+    }
+    ClearGraphicsSceneCommand clear_graphics_cmd(_drawer);
+    _facade->execute(clear_graphics_cmd);
+    DrawSceneCommand draw_cmd(_drawer);
+    _facade->execute(draw_cmd);
 }
 
 
@@ -152,5 +190,41 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         _facade->execute(cmd);
         update_scene();
     }
+}
+
+
+void MainWindow::on_MoveLightTo_clicked()
+{
+    Point center(ui->X->value(), ui->Y->value(), ui->Z->value());
+    MoveLightToCommand cmd(center);
+    _facade->execute(cmd);
+    std::stringstream buf;
+    buf << ui->X->value() << " " << ui->Y->value() << " " << ui->Z->value();
+    std::string str = buf.str();
+    ui->light->setText(str.c_str());
+    update_scene();
+}
+
+
+void MainWindow::on_MoveLight_clicked()
+{
+    double dx = ui->DX->value();
+    double dy = ui->DY->value();
+    double dz = ui->DZ->value();
+    MoveLightCommand cmd(dx, dy, dz);
+    _facade->execute(cmd);
+    std::stringstream buf;
+    buf << ui->light->text().toStdString();
+    double x, y, z;
+    buf >> x >> y >> z;
+    x += dx;
+    y += dy;
+    z += dz;
+    buf.str("");
+    buf.clear();
+    std::string str = buf.str();
+    std::cout << str;
+    ui->light->setText(str.c_str());
+    update_scene();
 }
 
