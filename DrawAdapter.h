@@ -151,6 +151,11 @@ private:
             double scalar = pnt_s.get_x() * pnt_l.get_x() + pnt_s.get_y() * pnt_l.get_y() + pnt_s.get_z() * pnt_l.get_z();
             if (scalar < 0)
                 continue;
+            //если источник находится между сферой и точкой, то точка освещена
+            //Point l_s = pair.first - l_center;
+            double scalar2 = l_s.get_x() * pnt_s.get_x() + l_s.get_y() * pnt_s.get_y() + l_s.get_z() * pnt_s.get_z();
+            if (scalar2 < 0)
+                continue;
             //ищем расстояние от центра сферы до прямой точка-свет, если оно меньше радиуса, то сфера отбрасывает на точку тень
             //модуль направляющего вектора прямой точка-свет
             //векторное произведение направляющего вектора и вектора центр_сферы-точка

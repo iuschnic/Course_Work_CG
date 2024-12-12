@@ -201,6 +201,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         dir = m_down;
     if (dir != none)
     {
+        std::cout << dir;
         MoveRotateCameraCommand cmd(dir);
         _facade->execute(cmd);
         update_scene();
