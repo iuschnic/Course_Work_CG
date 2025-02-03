@@ -2,6 +2,13 @@
 #include "ui_mainwindow.h"
 #include <qtimer.h>
 #include <string>
+#include <filesystem>
+#include <chrono>
+
+//int n_measures = 300;
+//int cur_measures;
+//double t = 0.0;
+//int flag = 1;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -60,7 +67,8 @@ void MainWindow::setup_scene()
 
 void MainWindow::on_load_scene_btn_clicked()
 {
-    auto path = QFileDialog::getOpenFileName(nullptr, "Загружаем сцену...", "scene.txt");
+    //auto path = QFileDialog::getOpenFileName(nullptr, "Загружаем сцену...", "C:/Users/redmi/PycharmProjects/pythonProject/test/data", "Text files (*.txt);; All files (*)");
+    auto path = QFileDialog::getOpenFileName(nullptr, "Загружаем сцену...", "./data/scene.txt", "Text files (*.txt);; All files (*)");
     if (path.isNull())
         return;
 
@@ -92,17 +100,11 @@ void MainWindow::on_load_scene_btn_clicked()
         return;
     }
 
-    //_models.push_back(*id);
-    //update_scene();
     ClearGraphicsSceneCommand clear_graphics_cmd(_drawer);
     _facade->execute(clear_graphics_cmd);
 
     DrawSceneCommand draw_cmd(_drawer);
     _facade->execute(draw_cmd);
-    //auto filename = QFileInfo(path.toUtf8().data()).fileName();
-    //QString figure = QString("Model ") + QString::number(*id);
-    //ui->models_combobox->addItem(figure);
-    //ui->models_combobox->setCurrentIndex(ui->models_combobox->count() - 1);
 }
 
 void MainWindow::on_generate_clicked()
@@ -146,18 +148,33 @@ void MainWindow::on_generate_clicked()
 
 void MainWindow::on_start_simulation_clicked()
 {
+    //t = 0.0;
+    //cur_measures = n_measures;
+    //flag = 1;
     _timer->start(1000 / 25);
 }
 
 void MainWindow::simulate()
 {
     auto rc = std::make_shared<int>(0);
-    clock_t start = clock();
 
     try
     {
         SimIterationCommand sim(_drawer, rc);
+        //auto start = std::chrono::high_resolution_clock::now();
         _facade->execute(sim);
+        //auto end = std::chrono::high_resolution_clock::now();
+        //std::chrono::duration<double> duration = end - start;
+        /*if (cur_measures > 0)
+        {
+            cur_measures--;
+            t += duration.count();
+        }
+        else if (cur_measures == 0 and flag)
+        {
+            flag = 0;
+            std::cout << t / n_measures << std::endl;
+        }*/
         if ((*rc) == -1)
         {
             _timer->stop();
@@ -170,7 +187,6 @@ void MainWindow::simulate()
         QMessageBox::critical(nullptr, "Ошибка!", "Для запуска симуляции загрузите сцену!");
         return;
     }
-    //printf("Time: %.6fs\n", (double) (clock() - start) / CLOCKS_PER_SEC);
 }
 
 

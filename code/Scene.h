@@ -135,7 +135,6 @@ public:
                     auto sec = std::static_pointer_cast<Object>(_visible_objects[obj_id_vec[j]]);
                     if (fir->check_intersection(sec) == true)
                     {
-                        std::cout << "FOUND\n";
                         flag = 1;
                         fir->add_object(sec);
                         _visible_objects.erase(obj_id_vec[j]);

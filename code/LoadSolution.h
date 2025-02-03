@@ -112,9 +112,9 @@ public:
                 double a, b; //углы для рандомной генерации положения вектора скорости в сферической системе координат
                 a = rand_double(0, 360) * M_PI / 180;
                 b = rand_double(0, 360) * M_PI / 180;
-                speed.set_x(r * cos(a) * cos(b));
-                speed.set_y(r * sin(a) * cos(b));
-                speed.set_z(r * sin(b));
+                speed.set_x(s * cos(a) * cos(b));
+                speed.set_y(s * sin(a) * cos(b));
+                speed.set_z(s * sin(b));
                 obj->set_speed(speed);
                 objs.push_back(obj);
                 flag1 = 0;
